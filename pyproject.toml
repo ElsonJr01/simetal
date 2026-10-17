@@ -1,0 +1,21 @@
+[project]
+name = "simetal"
+version = "0.1.0"
+description = "Ajuste e fechamento de balanço de massas e metalúrgico"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["B008"]  # Depends() em argumentos é o padrão do FastAPI
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true

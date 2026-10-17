@@ -1,0 +1,45 @@
+{% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
+{% if ajuste %}
+<h3>Iteração {{ ajuste.iteracao }} <span class="hint">χ² = {{ "%.2f"|format(ajuste.chi2) }} com {{ ajuste.graus }} grau(s) de liberdade</span></h3>
+{% if ajuste.convergiu %}<p class="alert ok">Os valores ajustados quase não mudaram em relação à iteração anterior: o cálculo convergiu.</p>{% endif %}
+{% if ajuste.iteracao >= max_iter %}<p class="alert warning">Limite de {{ max_iter }} iterações atingido. Revise melhor os dados de entrada.</p>{% endif %}
+{% for a in alerts %}<p class="alert {{ a.severity.value }}">{{ a.message }}</p>{% endfor %}
+
+<form hx-post="/campanhas/{{ camp.id }}/iterar" hx-target="#resultado" hx-swap="innerHTML">
+  <input type="hidden" name="componente" value="{{ componente }}">
+  <div class="scroll"><table class="num results">
+    <thead><tr>
+      <th scope="col">Fluxo</th><th scope="col">Entrada</th><th scope="col">σ</th><th scope="col">Ajustado</th>
+      {% if is_mass %}<th scope="col">% da alimentação</th>{% endif %}<th scope="col">z</th>
+      <th scope="col">Na próxima iteração</th><th scope="col">Novo valor</th><th scope="col">Novo σ</th>
+    </tr></thead>
+    <tbody>
+    {% for r in ajuste.resultados %}
+    <tr class="{{ 'suspect' if r.residuo_norm|abs > 1.96 }}">
+      <th scope="row">{{ r.fluxo_numero }} · {{ r.fluxo_nome }}</th>
+      <td>{{ "%.3f"|format(r.entrada) }}</td><td>{{ "%.3f"|format(r.desvio) }}</td>
+      <td class="strong">{{ "%.3f"|format(r.ajustado) }}</td>
+      {% if is_mass %}<td>{{ "%.2f"|format(r.percentual) if r.percentual is not none else "–" }}</td>{% endif %}
+      <td>{{ "%.2f"|format(r.residuo_norm) }}</td>
+      <td><select name="acao_{{ r.fluxo_numero }}" aria-label="Ação para o fluxo {{ r.fluxo_numero }}">
+        <option value="manter">Manter entrada</option><option value="calculado">Usar ajustado</option><option value="novo">Informar novo</option></select></td>
+      <td><input name="novo_valor_{{ r.fluxo_numero }}" inputmode="decimal" aria-label="Novo valor do fluxo {{ r.fluxo_numero }}"></td>
+      <td><input name="novo_desvio_{{ r.fluxo_numero }}" inputmode="decimal" aria-label="Novo desvio do fluxo {{ r.fluxo_numero }}"></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="hint">Para “Informar novo” sem σ, o desvio assume o valor informado. Linhas em destaque têm resíduo normalizado alto (|z| &gt; 1,96).</p>
+  <button class="btn primary" type="submit">Recalcular (iteração {{ ajuste.iteracao + 1 }})</button>
+</form>
+
+<div id="chart" class="chart" data-chart='{{ chart|tojson|forceescape }}' role="img" aria-label="Gráfico de barras: valores de entrada e ajustados por fluxo"></div>
+
+{% if camp.ajustes|length > 1 %}
+<details><summary>Histórico de iterações</summary>
+  <ul>{% for a in camp.ajustes if a.componente == componente %}<li>Iteração {{ a.iteracao }} · χ² {{ "%.2f"|format(a.chi2) }}{{ " · convergiu" if a.convergiu }}</li>{% endfor %}</ul>
+</details>
+{% endif %}
+{% else %}
+<p class="muted">Preencha as medidas, salve e feche o balanço.</p>
+{% endif %}

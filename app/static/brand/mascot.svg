@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="MASCOTE">
+  <!-- IDENTIDADE VISUAL: substitua pelo mascote oficial (mesmo nome de arquivo, 128x128, fundo transparente) -->
+  <circle cx="64" cy="64" r="60" fill="none" stroke="#1b6b7a" stroke-width="3" stroke-dasharray="8 6"/>
+  <text x="50%" y="50%" fill="#1b6b7a" font-family="sans-serif" font-size="16" text-anchor="middle" dominant-baseline="middle">MASCOTE</text>
+</svg>

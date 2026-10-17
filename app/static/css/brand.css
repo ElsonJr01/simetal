@@ -1,0 +1,27 @@
+/* ==========================================================================
+   IDENTIDADE VISUAL ▸ TOKENS DA MARCA
+   Este é o ÚNICO arquivo que precisa mudar para aplicar a paleta e as fontes
+   oficiais. Os valores abaixo são provisórios (placeholders).
+   ========================================================================== */
+:root {
+  /* Cores da marca */
+  --brand-primary: #1b6b7a;        /* cor principal (botões, links)        */
+  --brand-primary-contrast: #ffffff;
+  --brand-accent: #b8892b;         /* cor de destaque (ouro/minério)       */
+  --brand-ink: #12232b;            /* texto principal e cabeçalho          */
+  --brand-surface: #f3f6f7;        /* fundo da página                      */
+  --brand-panel: #ffffff;          /* fundo de painéis e tabelas           */
+  --brand-line: #d3dde0;           /* bordas e divisórias                  */
+
+  /* Cores de estado */
+  --state-ok: #2f7d4f;
+  --state-warning: #9a6a00;
+  --state-error: #b3392f;
+
+  /* Tipografia (troque também o <link> de fontes em templates/base.html) */
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-body);
+
+  /* Forma */
+  --radius: 4px;
+}

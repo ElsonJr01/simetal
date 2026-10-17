@@ -1,0 +1,24 @@
+{% if error %}
+<p class="alert warning">{{ error }} O restante do sistema segue funcionando.</p>
+{% elif not weather %}
+<p class="muted">Defina o local da usina para ver temperatura e chuva.</p>
+{% else %}
+<h3>Clima em {{ usina.municipio_nome }}/{{ usina.uf }}</h3>
+<p>
+  <strong>{{ "%.1f"|format(weather.temperature_c) if weather.temperature_c is not none else "–" }} °C</strong> agora ·
+  chuva nos últimos 7 dias: <strong>{{ "%.1f"|format(weather.rain_last_7d_mm) }} mm</strong>
+</p>
+{% if weather.rain_alert %}
+<p class="alert info">Choveu {{ "%.0f"|format(weather.alert_threshold_mm) }} mm ou mais em algum dia recente. Chuva pode alterar umidade e vazões do circuito: considere isso ao interpretar as medidas desse período.</p>
+{% endif %}
+<div class="scroll"><table class="num">
+  <thead><tr><th scope="col">Dia</th><th scope="col">Máx. (°C)</th><th scope="col">Mín. (°C)</th><th scope="col">Chuva (mm)</th></tr></thead>
+  <tbody>{% for d in weather.days %}
+    <tr><th scope="row">{{ d.date[8:10] }}/{{ d.date[5:7] }}</th>
+      <td>{{ "%.1f"|format(d.tmax) if d.tmax is not none else "–" }}</td>
+      <td>{{ "%.1f"|format(d.tmin) if d.tmin is not none else "–" }}</td>
+      <td>{{ "%.1f"|format(d.rain_mm) if d.rain_mm is not none else "–" }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+<p class="hint">Dados meteorológicos: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a> · Localidades: IBGE</p>
+{% endif %}

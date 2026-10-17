@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ brand.name }}{% endblock %} · {{ brand.name }}</title>
+  <meta name="description" content="{{ brand.tagline }}">
+  {# IDENTIDADE VISUAL: favicon e imagem de compartilhamento (troque em config.py > Brand ou substitua os arquivos em static/brand/) #}
+  <link rel="icon" href="{{ brand.favicon }}" type="image/svg+xml">
+  <meta property="og:title" content="{{ brand.name }}">
+  <meta property="og:description" content="{{ brand.tagline }}">
+  <meta property="og:image" content="{{ brand.og_image }}">
+  {# IDENTIDADE VISUAL: tipografia. Troque a família e as variáveis --font-* em static/css/brand.css #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  {# IDENTIDADE VISUAL: cores e fontes (tokens). Edite este arquivo para aplicar a paleta da marca #}
+  <link rel="stylesheet" href="/static/css/brand.css">
+  <link rel="stylesheet" href="/static/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js" defer></script>
+  <script src="/static/js/app.js" defer></script>
+  <script src="/static/js/mascote.js" defer></script>
+</head>
+<body data-tip-context="{{ tip_context|default('geral') }}">
+  <a class="skip" href="#conteudo">Ir para o conteúdo</a>
+  <header class="topbar">
+    <a class="brand" href="/usinas" aria-label="{{ brand.name }} - início">
+      {% include "partials/_logo.html" %}
+    </a>
+    {% if user %}
+    <nav class="topnav" aria-label="Principal">
+      <a href="/usinas">Usinas</a>
+      <a href="/docs" target="_blank" rel="noopener">API</a>
+      <form method="post" action="/logout"><button class="link" type="submit">Sair ({{ user.nome.split()[0] }})</button></form>
+    </nav>
+    {% endif %}
+  </header>
+  <main id="conteudo">{% block content %}{% endblock %}</main>
+  {% if settings.mascot_enabled %}{% include "partials/_mascote.html" %}{% endif %}
+  {% if settings.vlibras_enabled %}
+  {# ACESSIBILIDADE: widget oficial VLibras (https://vlibras.gov.br). Traduz o conteúdo da página para Libras. #}
+  <div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>
+  </div>
+  <script src="https://vlibras.gov.br/app/vlibras-plugin.js" defer></script>
+  <script defer>window.addEventListener("load", function () { if (window.VLibras) new window.VLibras.Widget("https://vlibras.gov.br/app"); });</script>
+  {% endif %}
+  <footer class="footer">
+    <span>{{ brand.name }} · {{ brand.tagline }}</span>
+    {# IDENTIDADE VISUAL: logo de instituição parceira (opcional). Defina Brand.institution_logo em config.py #}
+    {% if brand.institution_logo %}<img class="inst-logo" src="{{ brand.institution_logo }}" alt="{{ brand.institution_name }}">{% endif %}
+  </footer>
+</body>
+</html>

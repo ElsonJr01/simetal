@@ -1,0 +1,17 @@
+{# IDENTIDADE VISUAL ▸ MASCOTE do bot de dicas. Arquivo: static/brand/mascot.svg (sugestão: 128x128 px, fundo transparente).
+   O nome vem de Brand.mascot_name (config.py). As falas ficam em app/content/tips.py. #}
+<aside id="mascote" class="mascote" data-nome="{{ brand.mascot_name }}" aria-label="Dicas do {{ brand.mascot_name }}" hidden>
+  <div class="mascote-balao" id="mascote-balao" role="status" aria-live="polite" hidden>
+    <p class="mascote-titulo" id="mascote-titulo"></p>
+    <p id="mascote-texto"></p>
+    <div class="mascote-acoes">
+      <button type="button" class="btn" id="mascote-proxima">Próxima dica</button>
+      <button type="button" class="btn primary" id="mascote-entendi">Entendi</button>
+      <button type="button" class="link-dark" id="mascote-silenciar">Não mostrar sozinho</button>
+    </div>
+  </div>
+  <button type="button" class="mascote-botao" id="mascote-botao" aria-expanded="false" aria-controls="mascote-balao">
+    <img src="{{ brand.mascot }}" alt="" width="64" height="64">
+    <span class="sr-only">Abrir dicas do {{ brand.mascot_name }}</span>
+  </button>
+</aside>

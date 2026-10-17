@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ "Criar conta" if mode == "register" else "Entrar" }}{% endblock %}
+{% block content %}
+<section class="auth">
+  <div class="auth-form">
+    <h1>{{ "Criar conta" if mode == "register" else "Entrar no " ~ brand.name }}</h1>
+    <p class="muted">{{ brand.tagline }}.</p>
+    {% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
+    <form method="post" action="{{ '/registrar' if mode == 'register' else '/login' }}">
+      {% if mode == "register" %}
+      <label>Nome<input name="nome" value="{{ nome or '' }}" required minlength="2" autocomplete="name"></label>
+      {% endif %}
+      <label>E-mail<input name="email" type="email" value="{{ email or '' }}" required autocomplete="email"></label>
+      <label>Senha<input name="senha" type="password" required minlength="{{ 8 if mode == 'register' else 1 }}" autocomplete="{{ 'new-password' if mode == 'register' else 'current-password' }}"></label>
+      <button class="btn primary" type="submit">{{ "Criar conta" if mode == "register" else "Entrar" }}</button>
+    </form>
+    {% if mode == "register" %}
+    <p>Já tem conta? <a href="/login">Entrar</a></p>
+    {% elif settings.allow_registration %}
+    <p>Ainda não tem conta? <a href="/registrar">Criar conta</a></p>
+    {% endif %}
+  </div>
+  {# IDENTIDADE VISUAL ▸ IMAGEM DE DESTAQUE do login. Arquivo: static/brand/hero.svg (sugestão: 900x1200 px, retrato). #}
+  <div class="auth-hero" aria-hidden="true"><img src="{{ brand.hero_image }}" alt=""></div>
+</section>
+{% endblock %}

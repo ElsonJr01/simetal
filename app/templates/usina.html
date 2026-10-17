@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ usina.nome }}<script src="/static/js/local.js" defer></script>
+{% endblock %}
+{% block content %}
+<p class="crumb"><a href="/usinas">Usinas</a></p>
+<div class="page-head"><h1>{{ usina.nome }}</h1></div>
+{% if usina.descricao %}<p class="muted">{{ usina.descricao }}</p>{% endif %}
+
+<section>
+  <h2>Localização e clima</h2>
+  {% if local_warning %}<p class="alert warning">{{ local_warning }}</p>{% endif %}
+  <form id="local-form" method="post" action="/usinas/{{ usina.id }}/local" class="inline"
+        data-uf="{{ usina.uf or '' }}" data-municipio="{{ usina.municipio_ibge or '' }}">
+    <label>Estado<select name="uf" id="local-uf" required><option value="">Carregando…</option></select></label>
+    <label>Município<select name="municipio_ibge" id="local-municipio" required><option value="">Escolha o estado</option></select></label>
+    <label>Latitude <span class="hint">opcional</span><input name="latitude" inputmode="decimal" value="{{ usina.latitude if usina.latitude is not none else '' }}"></label>
+    <label>Longitude <span class="hint">opcional</span><input name="longitude" inputmode="decimal" value="{{ usina.longitude if usina.longitude is not none else '' }}"></label>
+    <button class="btn" type="submit">Salvar local</button>
+  </form>
+  <p class="hint">Estados e municípios: IBGE. Sem latitude/longitude, o centro do município é buscado automaticamente (Open-Meteo).</p>
+  {% if usina.municipio_nome %}<p><strong>{{ usina.municipio_nome }}/{{ usina.uf }}</strong></p>{% endif %}
+  <div id="clima" hx-get="/usinas/{{ usina.id }}/clima" hx-trigger="load" hx-swap="innerHTML"><p class="muted">Carregando clima…</p></div>
+</section>
+
+<section>
+  <h2>Fluxograma</h2>
+  {% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
+  {% for a in alerts %}<p class="alert {{ a.severity.value }}">{{ a.message }}</p>{% endfor %}
+  <form method="post" action="/usinas/{{ usina.id }}/fluxograma" class="split">
+    <label>Fluxos <span class="hint">um nome por linha; a ordem define o número (1, 2, 3...)</span>
+      <textarea name="fluxos" rows="8">{{ flows_text }}</textarea></label>
+    <label>Operações <span class="hint">Nome | números dos fluxos que entram | números dos fluxos que saem</span>
+      <textarea name="operacoes" rows="8" placeholder="Ciclone | 1 | 2, 3">{{ ops_text }}</textarea></label>
+    <div><button class="btn primary" type="submit">Salvar fluxograma</button></div>
+  </form>
+
+  {% if matrix %}
+  <h3>Matriz M <span class="hint">+1 entra, −1 sai, 0 não se liga</span></h3>
+  <div class="scroll"><table class="num">
+    <thead><tr><th>Operação</th>{% for f in usina.fluxos %}<th scope="col">{{ f.numero }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for row in matrix %}<tr><th scope="row">{{ usina.operacoes[loop.index0].nome }}</th>{% for v in row %}<td>{{ v }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Campanhas de medição</h2>
+  {% if usina.campanhas %}
+  <ul class="list">{% for c in usina.campanhas %}
+    <li><a href="/campanhas/{{ c.id }}"><strong>{{ c.nome }}</strong></a><span class="muted">{{ c.criada_em.strftime('%d/%m/%Y') }} · {{ c.ajustes|length }} iterações</span></li>
+  {% endfor %}</ul>
+  {% endif %}
+  {% if usina.operacoes %}
+  <form method="post" action="/usinas/{{ usina.id }}/campanhas" class="inline">
+    <input name="nome" placeholder="Nome da campanha" required aria-label="Nome da campanha">
+    <button class="btn primary" type="submit">Criar campanha</button>
+  </form>
+  {% else %}<p class="muted">Salve o fluxograma para criar campanhas.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Dados abertos da mineração (ANM)</h2>
+  <p class="muted">Conjuntos publicados pela Agência Nacional de Mineração. Abrem no portal de dados abertos do governo.</p>
+  <ul class="list">
+    {% for d in anm.conjuntos if d.relevancia %}
+    <li><a href="{{ d.url }}" target="_blank" rel="noopener"><strong>{{ d.nome }}</strong></a><span class="muted">{{ d.relevancia }}</span></li>
+    {% endfor %}
+    {% for m in anm.mapas %}<li><a href="{{ m.url }}" target="_blank" rel="noopener"><strong>{{ m.nome }}</strong></a><span class="muted">mapa</span></li>{% endfor %}
+  </ul>
+  <p class="hint"><a href="{{ anm.pagina }}" target="_blank" rel="noopener">Ver todos os conjuntos de dados da ANM</a></p>
+</section>
+
+<form method="post" action="/usinas/{{ usina.id }}/excluir" onsubmit="return confirm('Excluir esta usina e todas as suas campanhas?')">
+  <button class="btn danger" type="submit">Excluir usina</button>
+</form>
+{% endblock %}

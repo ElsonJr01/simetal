@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ camp.nome }}{% endblock %}
+{% block content %}
+<p class="crumb"><a href="/usinas">Usinas</a> / <a href="/usinas/{{ camp.usina_id }}">{{ camp.usina.nome }}</a></p>
+<div class="page-head"><h1>{{ camp.nome }}</h1></div>
+
+<form method="get" class="inline">
+  <label>Componente
+    <input name="componente" value="{{ componente }}" list="componentes" required>
+    <datalist id="componentes">{% for c in components %}<option value="{{ c }}">{% endfor %}</datalist>
+  </label>
+  <button class="btn" type="submit">Abrir</button>
+  <span class="hint">“massa” fecha as vazões. Outros nomes (cinzas, Fe…) usam o balanço metalúrgico, depois do de massas.</span>
+</form>
+
+<section>
+  <h2>Medidas de {{ componente }}</h2>
+  <form method="post" action="/campanhas/{{ camp.id }}/medidas">
+    <input type="hidden" name="componente" value="{{ componente }}">
+    <div class="scroll"><table class="num">
+      <thead><tr><th scope="col">Fluxo</th><th scope="col">Valor medido</th><th scope="col">Desvio-padrão</th><th scope="col">Não amostrado</th></tr></thead>
+      <tbody>
+      {% for f in camp.usina.fluxos %}{% set m = measures.get(f.id) %}
+      <tr>
+        <th scope="row">{{ f.numero }} · {{ f.nome }}</th>
+        <td><input name="valor_{{ f.numero }}" inputmode="decimal" value="{{ m.valor if m else '' }}" aria-label="Valor do fluxo {{ f.numero }}"></td>
+        <td><input name="desvio_{{ f.numero }}" inputmode="decimal" value="{{ m.desvio if m else '' }}" aria-label="Desvio do fluxo {{ f.numero }}"></td>
+        <td><input type="checkbox" name="na_{{ f.numero }}" {{ 'checked' if m and m.nao_amostrado }} aria-label="Fluxo {{ f.numero }} não amostrado"></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <p class="hint">Fluxo não amostrado: informe uma estimativa; o desvio-padrão passa a ser igual ao valor (mínima confiabilidade).</p>
+    <button class="btn" type="submit">Salvar medidas</button>
+  </form>
+</section>
+
+<section>
+  <h2>Ajuste</h2>
+  <form hx-post="/campanhas/{{ camp.id }}/ajustar" hx-target="#resultado" hx-swap="innerHTML" class="inline">
+    <input type="hidden" name="componente" value="{{ componente }}">
+    <button class="btn primary" type="submit">{{ "Recalcular a partir das medidas" if ajuste else "Fechar balanço de " ~ componente }}</button>
+  </form>
+  <div id="resultado" aria-live="polite">{% include "partials/_resultado.html" %}</div>
+</section>
+{% endblock %}
