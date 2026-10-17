@@ -1,12 +1,26 @@
+
 [project]
 name = "simetal"
 version = "0.1.0"
 description = "Ajuste e fechamento de balanço de massas e metalúrgico"
 requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.115.6",
+    "jinja2==3.1.5",
+    "python-multipart==0.0.20",
+    "sqlalchemy==2.0.36",
+    "psycopg[binary]==3.2.3",
+    "pydantic-settings==2.7.0",
+    "pyjwt==2.10.1",
+    "argon2-cffi==23.1.0",
+    "numpy==2.1.3",
+    "httpx==0.28.1",
+]
 
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]
 ignore = ["B008"]  # Depends() em argumentos é o padrão do FastAPI
