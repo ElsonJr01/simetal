@@ -7,6 +7,7 @@
     <p class="muted">{{ brand.tagline }}.</p>
     {% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
     <form method="post" action="{{ '/registrar' if mode == 'register' else '/login' }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       {% if mode == "register" %}
       <label>Nome<input name="nome" value="{{ nome or '' }}" required minlength="2" autocomplete="name"></label>
       {% endif %}
@@ -20,7 +21,7 @@
     <p>Ainda não tem conta? <a href="/registrar">Criar conta</a></p>
     {% endif %}
   </div>
-  {# IDENTIDADE VISUAL ▸ IMAGEM DE DESTAQUE do login. Arquivo: static/brand/hero.svg (sugestão: 900x1200 px, retrato). #}
+  {# IDENTIDADE VISUAL ▸ IMAGEM DE DESTAQUE do login. Arquivo: static/brand/hero.png (900x1200 px). #}
   <div class="auth-hero" aria-hidden="true"><img src="{{ brand.hero_image }}" alt=""></div>
 </section>
 {% endblock %}

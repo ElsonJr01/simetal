@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -36,7 +36,9 @@ from app.schemas import (
     UsinaIn,
     UsinaOut,
 )
-from app.security import COOKIE_NAME, create_token, hash_password, verify_password
+from app import auth_service
+from app.auth_service import AuthError
+from app.security import COOKIE_NAME, create_token, hash_password
 
 router = APIRouter(prefix="/api/v1")
 
@@ -77,6 +79,18 @@ def _fail(exc: Exception) -> HTTPException:
 @router.get("/health", tags=["sistema"])
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@router.get("/health/ready", tags=["sistema"])
+def ready(db: Session = Depends(get_db)) -> dict[str, str]:
+    """Pronto para receber tráfego: confere a conexão com o banco."""
+    from sqlalchemy import text
+
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Banco de dados indisponível.") from exc
+    return {"status": "ready"}
 
 
 @router.get("/dicas", tags=["sistema"])
@@ -146,8 +160,8 @@ def clima_da_usina(usina_id: int, db: Session = Depends(get_db), user: Usuario =
 
 # ------------------------------------------------------------------ auth (UC01)
 @router.post("/auth/registro", response_model=TokenOut, status_code=201, tags=["auth"])
-def registro(data: RegistroIn, response: Response, db: Session = Depends(get_db)) -> TokenOut:
-    if not get_settings().allow_registration:
+def registro(data: RegistroIn, request: Request, response: Response, db: Session = Depends(get_db)) -> TokenOut:
+    if not auth_service.registration_open(db):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Cadastro desabilitado.")
     if db.scalar(select(Usuario).where(Usuario.email == data.email.lower())):
         raise HTTPException(status.HTTP_409_CONFLICT, "E-mail já cadastrado.")
@@ -160,10 +174,11 @@ def registro(data: RegistroIn, response: Response, db: Session = Depends(get_db)
 
 
 @router.post("/auth/login", response_model=TokenOut, tags=["auth"])
-def login(data: LoginIn, response: Response, db: Session = Depends(get_db)) -> TokenOut:
-    user = db.scalar(select(Usuario).where(Usuario.email == data.email.lower()))
-    if user is None or not verify_password(data.senha, user.senha_hash):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "E-mail ou senha incorretos.")
+def login(data: LoginIn, request: Request, response: Response, db: Session = Depends(get_db)) -> TokenOut:
+    try:
+        user = auth_service.authenticate(db, data.email, data.senha, request)
+    except AuthError as exc:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from exc
     token = create_token(user.id)
     response.set_cookie(COOKIE_NAME, token, httponly=True, samesite="lax", secure=get_settings().env == "production")
     return TokenOut(access_token=token)

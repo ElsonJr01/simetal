@@ -1,0 +1,5 @@
+<ul class="list">
+  {% for r in resultados %}
+  <li><strong>{{ r.fonte }}</strong><span class="{{ 'ok-text' if r.ok else 'err-text' }}">{{ "● " ~ r.detalhe if r.ok else "✕ " ~ r.detalhe }}</span></li>
+  {% endfor %}
+</ul>

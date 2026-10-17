@@ -18,3 +18,9 @@ function drawCharts(root) {
 }
 window.addEventListener("load", () => drawCharts());
 document.body.addEventListener("htmx:afterSwap", (e) => drawCharts(e.target));
+
+// CSRF: toda requisição do HTMX leva o token da página (a verificação está em app/csrf.py)
+document.body.addEventListener("htmx:configRequest", (e) => {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta) e.detail.headers["X-CSRF-Token"] = meta.content;
+});

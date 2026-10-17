@@ -12,7 +12,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import services
+from app import auth_service, csrf, services
+from app.auth_service import AuthError, client_ip
 from app.config import get_settings
 from app.core import InvalidInputError, SingularSystemError, diagnose
 from app.core.iteration import FlowAction, IterationAction
@@ -21,10 +22,10 @@ from app.integrations.http import IntegrationError
 from app.db import get_db
 from app.deps import current_user, get_owned_campanha, get_owned_usina
 from app.models import Ajuste, Campanha, Usina, Usuario
-from app.security import COOKIE_NAME, create_token, hash_password, verify_password
+from app.security import COOKIE_NAME, create_token, hash_password
 from app.seed import create_cambui
 
-router = APIRouter(include_in_schema=False)
+router = APIRouter(include_in_schema=False, dependencies=[Depends(csrf.csrf_protect)])
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
 
 
@@ -33,8 +34,14 @@ TIP_CONTEXT = {"usinas.html": "usinas", "usina.html": "fluxograma", "campanha.ht
 
 def render(request: Request, name: str, status_code: int = 200, **ctx) -> HTMLResponse:
     settings = get_settings()
-    base = {"brand": settings.brand, "settings": settings, "tip_context": TIP_CONTEXT.get(name, "geral")}
-    return templates.TemplateResponse(request, name, {**base, **ctx}, status_code=status_code)
+    token = request.cookies.get(csrf.COOKIE) or csrf.new_token()
+    base = {
+        "brand": settings.brand, "settings": settings, "csrf_token": token,
+        "tip_context": TIP_CONTEXT.get(name, "geral"),
+    }
+    response = templates.TemplateResponse(request, name, {**base, **ctx}, status_code=status_code)
+    csrf.ensure_cookie(response, request, token)
+    return response
 
 
 def _to_float(value: str | None) -> float | None:
@@ -65,9 +72,10 @@ def login_page(request: Request):
 
 @router.post("/login")
 def login(request: Request, email: str = Form(...), senha: str = Form(...), db: Session = Depends(get_db)):
-    user = db.scalar(select(Usuario).where(Usuario.email == email.strip().lower()))
-    if user is None or not verify_password(senha, user.senha_hash):
-        return render(request, "login.html", 401, mode="login", error="E-mail ou senha incorretos.", email=email)
+    try:
+        user = auth_service.authenticate(db, email, senha, request)
+    except AuthError as exc:
+        return render(request, "login.html", 401, mode="login", error=str(exc), email=email)
     resp = RedirectResponse("/usinas", status_code=303)
     _set_cookie(resp, user)
     return resp
@@ -81,19 +89,29 @@ def register_page(request: Request):
 @router.post("/registrar")
 def register(
     request: Request,
-    nome: str = Form(..., min_length=2),
+    nome: str = Form(...),
     email: str = Form(...),
-    senha: str = Form(..., min_length=8),
+    senha: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    if not get_settings().allow_registration:
-        return render(request, "login.html", 403, mode="register", error="O cadastro está desabilitado.")
+    if not auth_service.registration_open(db):
+        return render(request, "login.html", 403, mode="register", error="O cadastro está desabilitado. Fale com o administrador.")
     email = email.strip().lower()
-    if db.scalar(select(Usuario).where(Usuario.email == email)):
-        return render(request, "login.html", 409, mode="register", error="Este e-mail já está cadastrado.", email=email, nome=nome)
+    erro = None
+    if len(nome.strip()) < 2:
+        erro = "Informe o seu nome."
+    elif "@" not in email or "." not in email.rsplit("@", 1)[-1]:
+        erro = "Informe um e-mail válido."
+    elif len(senha) < 8:
+        erro = "A senha precisa ter pelo menos 8 caracteres."
+    elif db.scalar(select(Usuario).where(Usuario.email == email)):
+        erro = "Este e-mail já está cadastrado."
+    if erro:
+        return render(request, "login.html", 409 if "cadastrado" in erro else 422, mode="register", error=erro, email=email, nome=nome)
     user = Usuario(nome=nome.strip(), email=email, senha_hash=hash_password(senha))
     db.add(user)
     db.commit()
+    auth_service.audit(db, "cadastro", user=user, alvo=email, ip=client_ip(request))
     resp = RedirectResponse("/usinas", status_code=303)
     _set_cookie(resp, user)
     return resp

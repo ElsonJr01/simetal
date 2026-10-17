@@ -72,7 +72,8 @@ def test_validation_errors(client):
     assert r.status_code == 200 and abs(sum(a * b for a, b in zip([1, -1, -1], r.json()["ajustados"], strict=True))) < 1e-9
 
 
-def test_web_pages_and_demo_flow(client):
+def test_web_pages_and_demo_flow(web):
+    client = web
     assert client.get("/usinas", headers={"accept": "text/html"}, follow_redirects=False).status_code == 303
     r = client.post("/registrar", data={"nome": "Eng Web", "email": "web@ex.com", "senha": "senha-forte-123"}, follow_redirects=False)
     assert r.status_code == 303
@@ -90,7 +91,7 @@ def test_web_pages_and_demo_flow(client):
     r = client.post(f"/campanhas/{camp_id}/ajustar", data={"componente": "cinzas"})
     assert "33.77" in r.text
     assert client.get("/static/css/brand.css").status_code == 200
-    assert client.get("/static/brand/logo.svg").status_code == 200
+    assert client.get("/static/brand/logo.png").status_code == 200
 
 
 def test_open_tips_api_and_widgets(client):
@@ -101,7 +102,7 @@ def test_open_tips_api_and_widgets(client):
     assert all({"id", "titulo", "texto", "nivel"} <= t.keys() for t in tips)
     assert all(t["nivel"] == "basico" for t in client.get("/api/v1/dicas?nivel=basico").json())
     page = client.get("/login").text
-    assert "vlibras-plugin.js" in page and 'id="mascote"' in page
+    assert 'csrf-token' in page and "vlibras-plugin.js" in page and 'id="mascote"' in page
     assert 'data-tip-context="geral"' in page
 
 
@@ -141,7 +142,8 @@ def test_location_and_weather_flow(client, monkeypatch):
     assert "ibge" in fontes and fontes["anm"]["conjuntos"]
 
 
-def test_weather_failure_does_not_break_pages(client, monkeypatch):
+def test_weather_failure_does_not_break_pages(web, monkeypatch):
+    client = web
     from app.integrations import http
     from app.integrations.http import IntegrationError
 

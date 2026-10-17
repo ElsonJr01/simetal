@@ -1,8 +1,10 @@
-.PHONY: install run test lint format migrate
+.PHONY: install run admin test lint format migrate
 install:
 	pip install -r requirements-dev.txt
 run:
-	uvicorn app.main:app --reload
+	python -m uvicorn app.main:app --reload
+admin:
+	python -m app.cli create-admin --email $(email)
 test:
 	pytest --cov=app --cov-report=term-missing
 lint:

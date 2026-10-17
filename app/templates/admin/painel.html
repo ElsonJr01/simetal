@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Administração{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Administração</h1><span class="muted">v{{ d.versao }} · {{ d.ambiente }} · banco {{ d.banco }} {{ "✓" if d.banco_ok else "✕" }}</span></div>
+{% include "admin/_nav.html" %}
+
+<dl class="stats">
+  <div><dt>Usuários</dt><dd>{{ d.usuarios }}</dd><span class="hint">{{ d.usuarios_ativos }} ativos · {{ d.admins }} admin</span></div>
+  <div><dt>Usinas</dt><dd>{{ d.usinas }}</dd><span class="hint">{{ d.campanhas }} campanhas</span></div>
+  <div><dt>Ajustes</dt><dd>{{ d.ajustes }}</dd><span class="hint">{{ d.ajustes_7d }} nos últimos 7 dias</span></div>
+  <div><dt>Falhas de login</dt><dd>{{ d.falhas_login_7d }}</dd><span class="hint">últimos 7 dias</span></div>
+</dl>
+
+<section>
+  <h2>Cadastro de novos usuários</h2>
+  <p>Hoje o cadastro está <strong>{{ "aberto" if cadastro_aberto else "fechado" }}</strong>. {{ "Qualquer pessoa pode criar conta." if cadastro_aberto else "Só administradores veem usuários novos; contas existentes continuam entrando." }}</p>
+  <form method="post" action="/admin/cadastro" class="inline">
+    <input type="hidden" name="abrir" value="{{ 0 if cadastro_aberto else 1 }}">
+    <button class="btn" type="submit">{{ "Fechar cadastro" if cadastro_aberto else "Abrir cadastro" }}</button>
+  </form>
+</section>
+
+<section>
+  <h2>Recursos e fontes públicas</h2>
+  <p class="muted">Integrações: {{ "ligadas" if d.integracoes else "desligadas" }} · VLibras: {{ "ligado" if d.vlibras else "desligado" }} · Mascote: {{ "ligado" if d.mascote else "desligado" }} (variáveis <code>SIMETAL_*</code>)</p>
+  <button class="btn" hx-post="/admin/testar-fontes" hx-target="#fontes" hx-swap="innerHTML">Testar IBGE e Open-Meteo agora</button>
+  <div id="fontes" aria-live="polite"></div>
+</section>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Identidade visual · Administração{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Identidade visual</h1></div>
+{% include "admin/_nav.html" %}
+<p>Cada arquivo tem <strong>local e nome fixos</strong> em <code>app/static/brand/</code>. Para trocar, substitua o PNG com o mesmo nome no repositório e faça um novo deploy (o disco do Vercel não guarda uploads).</p>
+<div class="scroll"><table>
+  <thead><tr><th scope="col">Prévia</th><th scope="col">Arquivo</th><th scope="col">Tamanho recomendado</th><th scope="col">Onde aparece</th><th scope="col">Estado</th></tr></thead>
+  <tbody>
+  {% for i in itens %}{% set s = i.slot %}
+  <tr>
+    <td>{% if i.existe %}<img class="thumb" src="{{ s.url }}" alt="" loading="lazy">{% endif %}</td>
+    <th scope="row"><code>app/static/brand/{{ s.file }}</code></th>
+    <td>{{ s.width }}×{{ s.height }} px<br><span class="hint">{{ s.nota }}</span></td>
+    <td>{{ s.onde }}</td>
+    <td>
+      {% if not i.existe %}<span class="err-text">arquivo ausente</span>
+      {% elif not i.valido %}<span class="err-text">não é um PNG válido</span>
+      {% elif i.placeholder %}<span class="warn-text">provisório (placeholder)</span>
+      {% else %}<span class="ok-text">arquivo definitivo</span>{% endif %}
+      {% if i.dimensoes %}<br><span class="hint">{{ i.dimensoes[0] }}×{{ i.dimensoes[1] }} px · {{ (i.bytes / 1024)|round(1) }} KB</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<p class="hint">Cores e fontes: <code>app/static/css/brand.css</code>. Nome, slogan e nome do mascote: <code>app/config.py</code> (classe <code>Brand</code>).</p>
+{% endblock %}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, false, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -22,7 +22,13 @@ class Usuario(Base):
     email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     senha_hash: Mapped[str] = mapped_column(String(255))
     papel: Mapped[str] = mapped_column(String(20), default="engenheiro")  # admin | engenheiro | visitante
+    ativo: Mapped[bool] = mapped_column(default=True, server_default=true())
+    falhas_login: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    bloqueado_ate: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ultimo_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    usinas: Mapped[list[Usina]] = relationship(back_populates="dono", cascade="all, delete-orphan")
 
 
 class Usina(Base):
@@ -39,6 +45,7 @@ class Usina(Base):
     dono_id: Mapped[int] = mapped_column(ForeignKey("usuario.id", ondelete="CASCADE"), index=True)
     criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
+    dono: Mapped[Usuario] = relationship(back_populates="usinas")
     fluxos: Mapped[list[Fluxo]] = relationship(
         back_populates="usina", cascade="all, delete-orphan", order_by="Fluxo.numero"
     )
@@ -154,3 +161,27 @@ class ResultadoFluxo(Base):
     acao: Mapped[str] = mapped_column(String(20), default="manter")
 
     ajuste: Mapped[Ajuste] = relationship(back_populates="resultados")
+
+
+class Auditoria(Base):
+    """Trilha de auditoria: ações administrativas e eventos de segurança."""
+
+    __tablename__ = "auditoria"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id", ondelete="SET NULL"), nullable=True)
+    usuario_email: Mapped[str] = mapped_column(String(254), default="")  # cópia: sobrevive à exclusão do usuário
+    acao: Mapped[str] = mapped_column(String(60), index=True)
+    alvo: Mapped[str] = mapped_column(String(160), default="")
+    detalhe: Mapped[str] = mapped_column(Text, default="")
+    ip: Mapped[str] = mapped_column(String(45), default="")
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, index=True)
+
+
+class Configuracao(Base):
+    """Chaves de configuração alteráveis em tempo de execução pelo administrador."""
+
+    __tablename__ = "configuracao"
+
+    chave: Mapped[str] = mapped_column(String(60), primary_key=True)
+    valor: Mapped[str] = mapped_column(String(255), default="")

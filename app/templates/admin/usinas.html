@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Usinas · Administração{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Usinas de todos os usuários</h1>
+  <form method="get" class="inline" role="search"><input name="q" value="{{ q }}" placeholder="Nome da usina" aria-label="Buscar usina"><button class="btn" type="submit">Buscar</button></form>
+</div>
+{% include "admin/_nav.html" %}
+<div class="scroll"><table>
+  <thead><tr><th scope="col">Usina</th><th scope="col">Dono</th><th scope="col">Local</th><th scope="col">Fluxos / operações / campanhas</th><th scope="col">Ações</th></tr></thead>
+  <tbody>
+  {% for u in usinas %}
+  <tr>
+    <th scope="row"><a href="/usinas/{{ u.id }}">{{ u.nome }}</a></th>
+    <td>{{ u.dono.email }}</td>
+    <td>{{ (u.municipio_nome ~ "/" ~ u.uf) if u.municipio_nome else "–" }}</td>
+    <td>{{ u.fluxos|length }} / {{ u.operacoes|length }} / {{ u.campanhas|length }}</td>
+    <td class="actions"><form method="post" action="/admin/usinas/{{ u.id }}/excluir" onsubmit="return confirm('Excluir a usina {{ u.nome }}?')"><button class="btn danger flat" type="submit">Excluir</button></form></td>
+  </tr>
+  {% else %}<tr><td colspan="5" class="muted">Nenhuma usina encontrada.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% set extra = ("q=" ~ q|urlencode ~ "&") if q else "" %}
+{% include "admin/_paginacao.html" %}
+{% endblock %}

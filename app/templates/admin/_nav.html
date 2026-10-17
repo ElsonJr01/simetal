@@ -1,0 +1,7 @@
+<nav class="subnav" aria-label="Administração">
+  {% for key, label, href in [("painel","Painel","/admin"),("usuarios","Usuários","/admin/usuarios"),("usinas","Usinas","/admin/usinas"),("auditoria","Auditoria","/admin/auditoria"),("identidade","Identidade visual","/admin/identidade")] %}
+  <a href="{{ href }}" {% if secao == key %}aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+{% if msg %}<p class="alert ok" role="status">{{ msg }}</p>{% endif %}
+{% if erro %}<p class="alert error" role="alert">{{ erro }}</p>{% endif %}

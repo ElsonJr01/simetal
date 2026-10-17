@@ -16,6 +16,7 @@
 <section>
   <h2>Medidas de {{ componente }}</h2>
   <form method="post" action="/campanhas/{{ camp.id }}/medidas">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" name="componente" value="{{ componente }}">
     <div class="scroll"><table class="num">
       <thead><tr><th scope="col">Fluxo</th><th scope="col">Valor medido</th><th scope="col">Desvio-padrão</th><th scope="col">Não amostrado</th></tr></thead>

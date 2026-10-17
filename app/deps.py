@@ -1,4 +1,4 @@
-"""Dependências FastAPI: usuário autenticado e posse de recursos."""
+"""Dependências FastAPI: usuário autenticado, papéis e posse de recursos."""
 
 from __future__ import annotations
 
@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import Campanha, Usina, Usuario
 from app.security import COOKIE_NAME, decode_token
+
+READ_ONLY_EXEMPT = ("/logout", "/api/v1/auth/")  # visitante pode sair e autenticar
 
 
 class LoginRequired(Exception):
@@ -25,10 +27,24 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> Usuario:
     token = _token_from(request)
     user_id = decode_token(token) if token else None
     user = db.get(Usuario, user_id) if user_id else None
-    if user is None:
+    if user is None or not user.ativo:
         if "text/html" in request.headers.get("accept", ""):
             raise LoginRequired
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Autenticação necessária.")
+    # Perfil "visitante" é somente leitura
+    if (
+        user.papel == "visitante"
+        and request.method not in ("GET", "HEAD", "OPTIONS")
+        and not request.url.path.startswith(READ_ONLY_EXEMPT)
+    ):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Perfil de visitante é somente leitura.")
+    request.state.user = user
+    return user
+
+
+def require_admin(user: Usuario = Depends(current_user)) -> Usuario:
+    if user.papel != "admin":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Acesso restrito a administradores.")
     return user
 
 

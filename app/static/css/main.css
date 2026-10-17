@@ -60,3 +60,18 @@ tr.suspect{background:#fbf1de}
 .mascote-titulo{font-weight:600}
 .mascote-acoes{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
 .link-dark{background:none;border:0;color:#5b6e75;text-decoration:underline;cursor:pointer;font:inherit;font-size:.85rem;padding:0}
+/* ---- Administração e estados ---- */
+.subnav{display:flex;gap:1.25rem;flex-wrap:wrap;border-bottom:1px solid var(--brand-line);margin:.5rem 0 1.25rem}
+.subnav a{padding:.5rem 0;text-decoration:none;color:var(--brand-ink)}
+.subnav a[aria-current=page]{border-bottom:3px solid var(--brand-primary);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin:0 0 1rem}
+.stats div{border-top:3px solid var(--brand-primary);padding:.5rem 0}
+.stats dt{color:#5b6e75;font-size:.9rem}.stats dd{margin:0;font-size:2rem;font-weight:600;font-variant-numeric:tabular-nums}
+.ok-text{color:var(--state-ok)}.err-text{color:var(--state-error)}.warn-text{color:var(--state-warning)}
+.actions{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}.actions form{margin:0}
+.inline.tight{margin:0;gap:.4rem}.inline.tight select{min-width:8rem}
+.btn.flat{margin-top:0}
+.pager{display:flex;gap:1rem;align-items:center;justify-content:center;margin-top:1rem}
+.thumb{max-width:96px;max-height:56px;background:repeating-conic-gradient(#d9e1e4 0 25%,#fff 0 50%) 0 0/12px 12px;border:1px solid var(--brand-line)}
+.error-page{max-width:560px;margin:3rem 0}
+code{background:#e8eef0;padding:.05rem .3rem;border-radius:3px;font-size:.9em}

@@ -29,6 +29,10 @@ Regras de dependência: `routers → services → core` e `services → models`.
 Regra: falha externa nunca derruba cálculo; é tratada nas rotas com mensagem amigável. Em testes a rede é substituída
 (`http._request`), então a suíte roda offline.
 
+## Segurança e administração
+`csrf.py` (double-submit cookie), `middleware.py` (cabeçalhos, request id, log), `auth_service.py` (bloqueio, auditoria, admin inicial),
+`admin_service.py` + `routers/admin.py` (/admin). `deps.py` aplica: usuário ativo, visitante somente leitura, `require_admin`.
+
 ## Decisões
 - **Pesos 1/σ²** e solução do sistema KKT por Gauss próprio com pivoteamento; a forma fechada `x − ΣMᵀ(MΣMᵀ)⁻¹Mx` serve de verificação cruzada nos testes.
 - **Balanço metalúrgico** usa as vazões ajustadas mais recentes como constantes e reconcilia c = W·X.

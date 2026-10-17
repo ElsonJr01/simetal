@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Auditoria · Administração{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Auditoria</h1>
+  <form method="get" class="inline"><input name="acao" value="{{ acao }}" placeholder="Filtrar por ação (ex.: login_falha)" aria-label="Filtrar por ação"><button class="btn" type="submit">Filtrar</button></form>
+</div>
+{% include "admin/_nav.html" %}
+<div class="scroll"><table>
+  <thead><tr><th scope="col">Quando (UTC)</th><th scope="col">Quem</th><th scope="col">Ação</th><th scope="col">Alvo</th><th scope="col">Detalhe</th><th scope="col">IP</th></tr></thead>
+  <tbody>
+  {% for e in eventos %}
+  <tr><td>{{ e.criado_em.strftime("%d/%m/%Y %H:%M:%S") }}</td><td>{{ e.usuario_email or "–" }}</td><td><code>{{ e.acao }}</code></td><td>{{ e.alvo }}</td><td>{{ e.detalhe }}</td><td>{{ e.ip }}</td></tr>
+  {% else %}<tr><td colspan="6" class="muted">Nenhum evento registrado.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% set extra = ("acao=" ~ acao|urlencode ~ "&") if acao else "" %}
+{% include "admin/_paginacao.html" %}
+{% endblock %}

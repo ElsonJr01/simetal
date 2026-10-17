@@ -11,6 +11,7 @@
   {% if local_warning %}<p class="alert warning">{{ local_warning }}</p>{% endif %}
   <form id="local-form" method="post" action="/usinas/{{ usina.id }}/local" class="inline"
         data-uf="{{ usina.uf or '' }}" data-municipio="{{ usina.municipio_ibge or '' }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <label>Estado<select name="uf" id="local-uf" required><option value="">Carregando…</option></select></label>
     <label>Município<select name="municipio_ibge" id="local-municipio" required><option value="">Escolha o estado</option></select></label>
     <label>Latitude <span class="hint">opcional</span><input name="latitude" inputmode="decimal" value="{{ usina.latitude if usina.latitude is not none else '' }}"></label>
@@ -27,6 +28,7 @@
   {% if error %}<p class="alert error" role="alert">{{ error }}</p>{% endif %}
   {% for a in alerts %}<p class="alert {{ a.severity.value }}">{{ a.message }}</p>{% endfor %}
   <form method="post" action="/usinas/{{ usina.id }}/fluxograma" class="split">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <label>Fluxos <span class="hint">um nome por linha; a ordem define o número (1, 2, 3...)</span>
       <textarea name="fluxos" rows="8">{{ flows_text }}</textarea></label>
     <label>Operações <span class="hint">Nome | números dos fluxos que entram | números dos fluxos que saem</span>
@@ -52,6 +54,7 @@
   {% endif %}
   {% if usina.operacoes %}
   <form method="post" action="/usinas/{{ usina.id }}/campanhas" class="inline">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input name="nome" placeholder="Nome da campanha" required aria-label="Nome da campanha">
     <button class="btn primary" type="submit">Criar campanha</button>
   </form>
@@ -71,6 +74,7 @@
 </section>
 
 <form method="post" action="/usinas/{{ usina.id }}/excluir" onsubmit="return confirm('Excluir esta usina e todas as suas campanhas?')">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   <button class="btn danger" type="submit">Excluir usina</button>
 </form>
 {% endblock %}

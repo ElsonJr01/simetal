@@ -1,32 +1,30 @@
-# Identidade visual: onde colocar logos, imagens, cores e fontes
+# Identidade visual: onde colocar logos e imagens
 
-Todo o projeto usa **placeholders tracejados**. Para aplicar a marca, substitua os arquivos abaixo
-(mantendo o nome) ou mude os caminhos em `app/config.py` (classe `Brand`). Nenhum template precisa mudar.
+Todos os arquivos ficam em **`app/static/brand/`**, com **nomes e formato fixos (PNG)**.
+Para aplicar a marca, **substitua o arquivo com o mesmo nome** e faça um novo deploy. Nenhum código muda.
 
-| Slot | Arquivo (em `app/static/brand/`) | Onde aparece | Sugestão de formato |
-|---|---|---|---|
-| Logo principal | `logo.svg` | Cabeçalho de todas as páginas (`templates/partials/_logo.html`) | SVG ou PNG transparente, exibido com 32 px de altura |
-| Logo para fundo escuro | `logo-dark.svg` | Reservado (ex.: rodapé escuro, relatórios) | SVG |
-| Símbolo/ícone | `logo-mark.svg` | Reservado (app mobile, PDF) | SVG quadrado |
-| Favicon | `favicon.svg` | Aba do navegador (`base.html`) | SVG (ou ICO 32x32) |
-| Imagem de destaque | `hero.svg` | Tela de login/cadastro (`login.html`) | 900x1200 px, retrato (JPG/WebP/SVG) |
-| Imagem de lista vazia | `empty-state.svg` | Lista de usinas sem itens (`usinas.html`) | 320x200 px |
-| Imagem de compartilhamento | `og-image.svg` | Pré-visualização de links (Open Graph) | 1200x630 px (PNG/JPG; algumas redes não aceitam SVG) |
-| Mascote do bot de dicas | `mascot.svg` | Botão flutuante no canto inferior esquerdo (`partials/_mascote.html`) | 128x128 px, fundo transparente (SVG/PNG) |
-| Logo de instituição parceira | defina `Brand.institution_logo` | Rodapé (só aparece se preenchido) | PNG/SVG, 28 px de altura |
+| Arquivo | Tamanho recomendado | Onde aparece |
+|---|---|---|
+| `logo.png` | 480×96 px, fundo transparente | Cabeçalho de todas as páginas (exibido com 32 px de altura; o cabeçalho é escuro) |
+| `logo-dark.png` | 480×96 px | Reservado: fundos escuros, rodapé, relatórios |
+| `logo-mark.png` | 256×256 px, transparente | Reservado: símbolo isolado (PDF, app) |
+| `favicon.png` | 64×64 px | Aba do navegador |
+| `hero.png` | 900×1200 px (retrato) | Imagem de destaque das telas de login e cadastro |
+| `empty-state.png` | 640×400 px | Lista vazia (ex.: nenhuma usina), exibida com 240 px de largura |
+| `og-image.png` | 1200×630 px | Pré-visualização ao compartilhar links |
+| `mascot.png` | 256×256 px, transparente | Mascote do bot de dicas (exibido com 64 px) |
+| `institution-logo.png` | 400×112 px | Rodapé; só aparece se `Brand.institution_name` estiver preenchido |
 
-Se trocar a extensão (ex.: `logo.png`), atualize o caminho em `Brand`.
+Os caminhos estão definidos **uma única vez** em `app/brand.py` (lista `SLOTS`) e usados por `app/config.py`.
+Os arquivos atuais são **placeholders** (moldura tracejada com o nome do arquivo).
 
-## Cores e tipografia
-Edite **somente** `app/static/css/brand.css` (variáveis `--brand-*`, `--state-*`, `--font-*`).
-Se usar outra fonte, troque também o `<link>` de fontes em `templates/base.html`.
-Os gráficos (Plotly) leem as mesmas variáveis, então acompanham a paleta.
+## Conferir o que falta
+Entre como administrador em **/admin/identidade**: a tabela mostra a prévia de cada arquivo, o tamanho real,
+e se ele ainda é provisório, ausente ou inválido.
 
-## Nome e slogan
-`Brand.name` e `Brand.tagline` em `app/config.py`.
+Para recriar placeholders que faltarem: `python scripts/gerar_placeholders.py` (requer `pip install pillow`; use `--force` para sobrescrever todos).
 
-## Mascote e dicas
-- Nome: `Brand.mascot_name` em `app/config.py` (hoje "Pepita", provisório).
-- Falas: `app/content/tips.py` (id, contexto, nível, título, texto). Adicione ou revise dicas ali; é conteúdo estático.
-- Para variar a imagem por situação (feliz, pensativo...), crie mais arquivos em `static/brand/` e troque no `mascote.js`.
-- Desligar: `SIMETAL_MASCOT_ENABLED=false`. O VLibras desliga com `SIMETAL_VLIBRAS_ENABLED=false`.
+## Cores, fontes, nome
+- Cores e fontes: **`app/static/css/brand.css`** (variáveis `--brand-*`, `--state-*`, `--font-*`). Se usar outra fonte, troque também o `<link>` de fontes em `templates/base.html`.
+- Nome, slogan, nome do mascote e instituição: `app/config.py` (classe `Brand`) ou, para o nome da instituição, defina o valor padrão ali.
+- Falas do mascote: `app/content/tips.py`.

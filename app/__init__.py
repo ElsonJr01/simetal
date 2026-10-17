@@ -1,3 +1,3 @@
-"""SIMETAL - Sistema de Ajuste e Fechamento de Balanço de Massas e Metalúrgico."""
+"""SIMETAL - ajuste e fechamento de balanco de massas e metalurgico."""
 
 __version__ = "0.1.0"

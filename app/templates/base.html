@@ -6,7 +6,8 @@
   <title>{% block title %}{{ brand.name }}{% endblock %} · {{ brand.name }}</title>
   <meta name="description" content="{{ brand.tagline }}">
   {# IDENTIDADE VISUAL: favicon e imagem de compartilhamento (troque em config.py > Brand ou substitua os arquivos em static/brand/) #}
-  <link rel="icon" href="{{ brand.favicon }}" type="image/svg+xml">
+  <link rel="icon" href="{{ brand.favicon }}" type="image/png">
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <meta property="og:title" content="{{ brand.name }}">
   <meta property="og:description" content="{{ brand.tagline }}">
   <meta property="og:image" content="{{ brand.og_image }}">
@@ -31,8 +32,10 @@
     {% if user %}
     <nav class="topnav" aria-label="Principal">
       <a href="/usinas">Usinas</a>
+      {% if user.papel == "admin" %}<a href="/admin">Administração</a>{% endif %}
       <a href="/docs" target="_blank" rel="noopener">API</a>
-      <form method="post" action="/logout"><button class="link" type="submit">Sair ({{ user.nome.split()[0] }})</button></form>
+      <form method="post" action="/logout">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="link" type="submit">Sair ({{ user.nome.split()[0] }})</button></form>
     </nav>
     {% endif %}
   </header>
@@ -50,7 +53,7 @@
   <footer class="footer">
     <span>{{ brand.name }} · {{ brand.tagline }}</span>
     {# IDENTIDADE VISUAL: logo de instituição parceira (opcional). Defina Brand.institution_logo em config.py #}
-    {% if brand.institution_logo %}<img class="inst-logo" src="{{ brand.institution_logo }}" alt="{{ brand.institution_name }}">{% endif %}
+    {% if brand.institution_name %}<img class="inst-logo" src="{{ brand.institution_logo }}" alt="{{ brand.institution_name }}">{% endif %}
   </footer>
 </body>
 </html>

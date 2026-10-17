@@ -60,7 +60,13 @@ def parse_flowsheet_text(flows_text: str, ops_text: str) -> tuple[list[str], lis
 
 
 def save_flowsheet(db: Session, usina: Usina, flows: list[str], ops: list[tuple[str, list[int], list[int]]]) -> list[Alert]:
-    """Substitui o fluxograma da usina. Rejeita se houver erro de validação."""
+    """Atualiza o fluxograma. Fluxos existentes são mantidos pelo número (e só renomeados), preservando
+    as medidas; fluxos removidos perdem as suas medidas. As operações são recriadas."""
+    cfg = get_settings()
+    if len(flows) > cfg.max_flows or len(ops) > cfg.max_operations:
+        raise ServiceError(f"Limite excedido: no máximo {cfg.max_flows} fluxos e {cfg.max_operations} operações.")
+    if any(len(n) > 120 for n in flows) or any(len(n) > 120 for n, _, _ in ops):
+        raise ServiceError("Nomes de fluxos e operações aceitam até 120 caracteres.")
     sheet = Flowsheet(
         flows=tuple(flows),
         operations=tuple(Operation(n, tuple(i - 1 for i in ins), tuple(o - 1 for o in outs)) for n, ins, outs in ops),
@@ -72,16 +78,23 @@ def save_flowsheet(db: Session, usina: Usina, flows: list[str], ops: list[tuple[
     if any(a.severity is Severity.ERROR for a in alerts):
         return alerts  # não grava; a tela mostra os erros
 
-    usina.fluxos.clear()
     usina.operacoes.clear()
     db.flush()
-    new_flows = [Fluxo(numero=i + 1, nome=name) for i, name in enumerate(flows)]
-    usina.fluxos.extend(new_flows)
+    by_num = {f.numero: f for f in usina.fluxos}
+    for i, name in enumerate(flows, start=1):
+        if i in by_num:
+            by_num[i].nome = name
+        else:
+            usina.fluxos.append(Fluxo(numero=i, nome=name))
+    for num, fluxo in by_num.items():
+        if num > len(flows):
+            usina.fluxos.remove(fluxo)
     db.flush()
+    flow_by_num = {f.numero: f for f in usina.fluxos}
     for name, ins, outs in ops:
         op = Operacao(nome=name)
-        op.conexoes = [Conexao(fluxo_id=new_flows[i - 1].id, sinal=1) for i in ins] + [
-            Conexao(fluxo_id=new_flows[o - 1].id, sinal=-1) for o in outs
+        op.conexoes = [Conexao(fluxo_id=flow_by_num[i].id, sinal=1) for i in ins] + [
+            Conexao(fluxo_id=flow_by_num[o].id, sinal=-1) for o in outs
         ]
         usina.operacoes.append(op)
     db.commit()

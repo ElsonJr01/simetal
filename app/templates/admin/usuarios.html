@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Usuários · Administração{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Usuários</h1>
+  <form method="get" class="inline" role="search"><input name="q" value="{{ q }}" placeholder="Nome ou e-mail" aria-label="Buscar usuário"><button class="btn" type="submit">Buscar</button></form>
+</div>
+{% include "admin/_nav.html" %}
+{% if senha_temp %}
+<div class="alert warning" role="alert">
+  <p><strong>Senha temporária de {{ senha_email }}:</strong> <code>{{ senha_temp }}</code></p>
+  <p class="hint">Mostrada uma única vez. Entregue ao usuário por um canal seguro e peça que a troque.</p>
+</div>
+{% endif %}
+<div class="scroll"><table>
+  <thead><tr><th scope="col">Usuário</th><th scope="col">Perfil</th><th scope="col">Situação</th><th scope="col">Último acesso</th><th scope="col">Ações</th></tr></thead>
+  <tbody>
+  {% for u in usuarios %}
+  <tr>
+    <th scope="row">{{ u.nome }}<br><span class="hint">{{ u.email }}</span></th>
+    <td>
+      <form method="post" action="/admin/usuarios/{{ u.id }}/papel" class="inline tight">
+        <select name="papel" aria-label="Perfil de {{ u.email }}" {% if u.id == user.id %}disabled{% endif %}>{% for p in papeis %}<option value="{{ p }}" {{ "selected" if p == u.papel }}>{{ p }}</option>{% endfor %}</select>
+        {% if u.id != user.id %}<button class="btn" type="submit">Salvar</button>{% endif %}
+      </form>
+    </td>
+    <td>{% if not u.ativo %}<span class="err-text">desativada</span>{% elif is_locked(u) %}<span class="err-text">bloqueada</span>{% else %}<span class="ok-text">ativa</span>{% endif %}</td>
+    <td>{{ u.ultimo_login.strftime("%d/%m/%Y %H:%M") if u.ultimo_login else "–" }}</td>
+    <td class="actions">
+      {% if u.id != user.id %}
+      <form method="post" action="/admin/usuarios/{{ u.id }}/ativo"><input type="hidden" name="ativo" value="{{ 0 if u.ativo else 1 }}"><button class="btn" type="submit">{{ "Desativar" if u.ativo else "Ativar" }}</button></form>
+      {% endif %}
+      {% if is_locked(u) %}<form method="post" action="/admin/usuarios/{{ u.id }}/desbloquear"><button class="btn" type="submit">Desbloquear</button></form>{% endif %}
+      <form method="post" action="/admin/usuarios/{{ u.id }}/senha" onsubmit="return confirm('Gerar nova senha temporária para {{ u.email }}?')"><button class="btn" type="submit">Redefinir senha</button></form>
+      {% if u.id != user.id %}
+      <form method="post" action="/admin/usuarios/{{ u.id }}/excluir" onsubmit="return confirm('Excluir {{ u.email }} e todas as usinas dele?')"><button class="btn danger flat" type="submit">Excluir</button></form>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="5" class="muted">Nenhum usuário encontrado.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% set extra = ("q=" ~ q|urlencode ~ "&") if q else "" %}
+{% include "admin/_paginacao.html" %}
+{% endblock %}

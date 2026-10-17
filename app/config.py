@@ -4,49 +4,71 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app import brand as _b
+
+DEFAULT_SECRET = "troque-esta-chave-em-producao"
 
 
 class Brand(BaseModel):
-    """IDENTIDADE VISUAL - todos os pontos de troca em um só lugar.
+    """Textos da marca e CAMINHOS FIXOS dos arquivos (ver app/brand.py e docs/IDENTIDADE_VISUAL.md).
 
-    Substitua os arquivos em app/static/brand/ (mantendo os nomes) ou altere os
-    caminhos abaixo. Veja docs/IDENTIDADE_VISUAL.md para dimensões e formatos.
+    Para trocar as imagens, substitua os PNGs em app/static/brand/ mantendo os nomes.
     """
 
     name: str = "SIMETAL"
     tagline: str = "Ajuste e fechamento de balanço de massas e metalúrgico"
-    logo: str = "/static/brand/logo.svg"  # LOGO principal (fundo claro) - cabeçalho
-    logo_dark: str = "/static/brand/logo-dark.svg"  # LOGO para fundo escuro
-    logo_mark: str = "/static/brand/logo-mark.svg"  # símbolo/ícone isolado (quadrado)
-    favicon: str = "/static/brand/favicon.svg"  # favicon
-    hero_image: str = "/static/brand/hero.svg"  # IMAGEM de destaque da tela de login
-    empty_state_image: str = "/static/brand/empty-state.svg"  # IMAGEM de "lista vazia"
-    og_image: str = "/static/brand/og-image.svg"  # IMAGEM de compartilhamento (redes sociais)
-    mascot: str = "/static/brand/mascot.svg"  # MASCOTE do bot de dicas (sugestão: 128x128, fundo transparente)
-    mascot_name: str = "Pepita"  # nome do mascote (placeholder: troque pelo oficial)
-    institution_logo: str = ""  # LOGO de instituição parceira (opcional, rodapé)
-    institution_name: str = ""
+    mascot_name: str = "Pepita"  # nome provisório do mascote
+    institution_name: str = ""  # preencha para exibir institution-logo.png no rodapé
+    logo: str = _b.BY_KEY["logo"].url
+    logo_dark: str = _b.BY_KEY["logo_dark"].url
+    logo_mark: str = _b.BY_KEY["logo_mark"].url
+    favicon: str = _b.BY_KEY["favicon"].url
+    hero_image: str = _b.BY_KEY["hero"].url
+    empty_state_image: str = _b.BY_KEY["empty_state"].url
+    og_image: str = _b.BY_KEY["og_image"].url
+    mascot: str = _b.BY_KEY["mascot"].url
+    institution_logo: str = _b.BY_KEY["institution_logo"].url
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="SIMETAL_", extra="ignore")
 
     env: str = "development"
-    secret_key: str = "troque-esta-chave-em-producao"
+    secret_key: str = DEFAULT_SECRET
     database_url: str = "sqlite:///./simetal.db"
     token_minutes: int = 60 * 8
     max_iterations: int = 12
     convergence_tol: float = 1e-3
-    allow_registration: bool = True  # desligue em produção real
-    vlibras_enabled: bool = True  # widget de tradução para Libras (VLibras, governo federal)
-    mascot_enabled: bool = True  # bot de dicas
-    integrations_enabled: bool = True  # IBGE e Open-Meteo
-    http_timeout: float = 6.0  # segundos, chamadas a fontes públicas
-    rain_alert_mm: float = 20.0  # chuva diária (mm) que gera aviso informativo
-    auto_create_tables: bool = True  # cria tabelas na partida (teste); em produção use Alembic
+    max_flows: int = 100
+    max_operations: int = 100
+    page_size: int = 20
+    # segurança de acesso
+    allow_registration: bool = True  # valor inicial; o admin pode alternar em /admin (fica no banco)
+    lockout_attempts: int = 5
+    lockout_minutes: int = 15
+    admin_email: str | None = None  # cria/garante um administrador na partida
+    admin_password: str | None = None  # usada só se o admin ainda não existir
+    admin_name: str = "Administrador"
+    # recursos opcionais
+    vlibras_enabled: bool = True
+    mascot_enabled: bool = True
+    integrations_enabled: bool = True
+    http_timeout: float = 6.0
+    rain_alert_mm: float = 20.0
+    auto_create_tables: bool = True  # cria tabelas e colunas novas na partida; em produção prefira Alembic
+    log_level: str = "INFO"
     brand: Brand = Brand()
+
+    @model_validator(mode="after")
+    def _production_guards(self) -> Settings:
+        if self.env == "production" and (self.secret_key == DEFAULT_SECRET or len(self.secret_key) < 32):
+            raise ValueError("Em produção, defina SIMETAL_SECRET_KEY com pelo menos 32 caracteres aleatórios.")
+        if bool(self.admin_email) != bool(self.admin_password):
+            raise ValueError("Defina SIMETAL_ADMIN_EMAIL e SIMETAL_ADMIN_PASSWORD juntos (ou nenhum dos dois).")
+        return self
 
     @property
     def sqlalchemy_url(self) -> str:
