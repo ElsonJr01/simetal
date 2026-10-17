@@ -36,3 +36,4 @@ check_untyped_defs = true
 
 [tool.vercel]
 entrypoint = "app.main:app"
+"fastapi==0.115.6",
