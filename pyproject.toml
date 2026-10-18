@@ -1,7 +1,7 @@
-﻿[project]
+[project]
 name = "simetal"
 version = "0.1.0"
-description = "Ajuste e fechamento de balanço de massas e metalúrgico"
+description = "Ajuste e fechamento de balanÃ§o de massas e metalÃºrgico"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi==0.115.6",
