@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Como funciona o método{% endblock %}
+{% block content %}
+<h1>Como funciona o método</h1>
+{% include "ajuda/_nav.html" %}
+<div class="prose">
+<p class="lead">Entre todos os conjuntos de valores que fecham o balanço, o {{ brand.name }} escolhe o que <strong>menos se afasta das medidas</strong>, levando em conta a confiança de cada uma. Esta página mostra como, com números reais do exemplo da monografia.</p>
+
+<h2>1. O problema, com um exemplo</h2>
+<p>Circuito de finos da Carbonífera Cambuí: um ciclone (fluxo 1 entra; 2 e 3 saem) seguido de uma espiral (fluxo 3 entra; 4, 5 e 6 saem). Valores medidos, em t/h:</p>
+<div class="scroll"><table class="num">
+  <thead><tr><th scope="col">Fluxo</th><th scope="col">Medido</th><th scope="col">Desvio (σ)</th><th scope="col">Ajustado</th><th scope="col">z</th></tr></thead>
+  <tbody>
+  {% for r in ex.rows %}<tr><th scope="row">{{ r.n }} · {{ r.nome }}</th><td>{{ r.x|num(2) }}</td><td>{{ r.s|num(2) }}</td><td class="strong">{{ r.xa|num(2) }}</td><td>{{ r.z|num(2) }}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+<p>Com os dados medidos, o ciclone não fecha: entra {{ ex.rows[0].x|num(2) }} e sai {{ (ex.rows[1].x + ex.rows[2].x)|num(2) }}. O resíduo é {{ ex.antes_op1|num(2) }} no ciclone e {{ ex.antes_op2|num(2) }} na espiral. Depois do ajuste, os resíduos são {{ ex.depois_op1|num(6) }} e {{ ex.depois_op2|num(6) }}: zero, a menos de arredondamento.</p>
+<p>Repare no fluxo 3: foi de {{ ex.rows[2].x|num(2) }} para {{ ex.rows[2].xa|num(2) }}. As medidas ao redor dele (1 e 2 na entrada do ciclone; 4, 5 e 6 nas saídas da espiral) apontam para um valor bem menor, e o ajuste divide a diferença entre as medidas conforme a confiança de cada uma. Uma correção desse tamanho é o que o sistema sinaliza como medida suspeita: vale voltar à amostragem desse ponto.</p>
+
+<h2>2. Passo a passo</h2>
+<h3>Passo 1 · O fluxograma vira uma matriz M</h3>
+<p>Uma linha por operação, uma coluna por fluxo: <strong>+1</strong> se o fluxo entra na operação, <strong>−1</strong> se sai, <strong>0</strong> se não se liga. O balanço de massas fecha quando <code>M · vazões = 0</code>.</p>
+<pre>             fluxo: 1   2   3   4   5   6
+Ciclone          [ +1  −1  −1   0   0   0 ]
+Espiral          [  0   0  +1  −1  −1  −1 ]</pre>
+
+<h3>Passo 2 · Cada medida ganha um peso</h3>
+<p>O peso é <code>1/σ²</code>. Medida precisa (σ pequeno) tem peso grande e quase não muda; medida duvidosa tem peso pequeno e absorve a correção. Para um fluxo não amostrado, σ = valor: confiança mínima.</p>
+
+<h3>Passo 3 · O que se minimiza</h3>
+<pre>minimizar   F = Σ ( x̂ⱼ − xⱼ )² / σⱼ²        sujeito a   M · x̂ = 0</pre>
+<p>Em palavras: a soma dos quadrados das correções, cada uma medida em unidades da sua própria incerteza, sob a condição de que todas as operações fechem.</p>
+
+<h3>Passo 4 · Multiplicadores de Lagrange</h3>
+<p>Para impor as restrições na minimização, acrescenta-se um multiplicador λ por operação. Derivando, o problema vira um sistema linear de (m + n) equações, com m fluxos e n operações:</p>
+<pre>[ 2P   Mᵀ ] [ x̂ ]   [ 2P·x ]
+[  M    0 ] [ λ  ] = [   0  ]          com P = diag(1/σ²)</pre>
+<p>Os valores de λ são só um artifício matemático e não têm significado de processo.</p>
+
+<h3>Passo 5 · Eliminação de Gauss</h3>
+<p>O sistema é resolvido por eliminação de Gauss com escolha do melhor pivô: triangulariza a matriz e resolve de trás para frente. Se algum pivô for nulo, o sistema é indeterminado ou inconsistente e o cálculo é interrompido com um aviso.</p>
+
+<h3>Passo 6 · Balanço de um componente (teor)</h3>
+<p>Para um teor, a quantidade que se conserva é <code>vazão × teor</code>. Como é um produto, usa-se a vazão <em>já ajustada</em> como constante e ajusta-se <code>c = vazão × teor</code> (com σ de c = vazão × σ do teor); depois, teor ajustado = c ajustado ÷ vazão. No exemplo, o teor de cinzas ajustado fica em {{ ex.cinzas_alim|num(2) }}% na alimentação e {{ ex.cinzas_conc|num(2) }}% no concentrado (fluxo 6).</p>
+
+<h3>Passo 7 · Testes de qualidade</h3>
+<ul>
+  <li><strong>Teste global (χ²):</strong> compara o resíduo de fechamento com o que o erro aleatório esperado explicaria. No exemplo, χ² = {{ ex.chi2|num(2) }} com {{ ex.dof }} graus de liberdade (limite de 95% ≈ 5,99).</li>
+  <li><strong>Resíduo normalizado (z):</strong> quanto cada medida foi corrigida, em unidades da sua incerteza. |z| &gt; 1,96 chama atenção.</li>
+</ul>
+
+<h2>3. Redundância: de onde vem o poder de correção</h2>
+<p>Medir <em>mais</em> do que o estritamente necessário é o que permite corrigir erros. Se você mede todos os 6 fluxos do exemplo e há 2 equações, sobram 2 equações para ajustar as medidas (redundância 2). Se deixa de medir o fluxo 3, ele é calculado a partir dos demais e ainda sobra 1. Se deixa de medir os fluxos 1 e 2 ao mesmo tempo, o balanço do ciclone não os distingue (indeterminados). A página de cada campanha mostra essa análise.</p>
+
+<h2>4. Limitações que você deve conhecer</h2>
+<ul>
+  <li>O ajuste é <strong>linear e não impõe valores positivos</strong>: ele avisa, mas pode devolver vazão negativa.</li>
+  <li>Assume que os <strong>erros são independentes</strong> entre medidas e que a usina esteve <strong>estável</strong> durante a coleta.</li>
+  <li>O balanço de teores usa as vazões já ajustadas como se fossem exatas; a incerteza delas não se propaga para os teores.</li>
+  <li>Com fluxos não amostrados tratados por σ grande, o teste χ² é aproximado.</li>
+  <li>O sistema <strong>aponta suspeitas</strong>, mas não descobre sozinho a causa de um erro grosseiro; isso depende do seu conhecimento da usina.</li>
+</ul>
+
+<h2>5. Referências</h2>
+<ul class="refs">
+  <li>Damasceno, P. F. T.; Nunes, A. C. <em>Sistema computadorizado para ajuste e fechamento de balanço de massas e metalúrgico: método iterativo</em>. Trabalho de formatura PMI 500, EPUSP, 1992.</li>
+  <li>Hodouin, D.; Everell, M. D. A hierarchical procedure for adjustment and material balancing of mineral processes data. <em>International Journal of Mineral Processing</em>, v. 7, p. 91-116, 1980.</li>
+  <li>Wills, B. A.; Manser, R. J. Reconciliation of simple node excess data. <em>Transactions of the Institution of Mining and Metallurgy</em>, Section C, v. 94, p. 209-214, 1985.</li>
+  <li>Gy, P. <em>Sampling of particulate materials: theory and practice</em>. Amsterdam: Elsevier, 1982.</li>
+  <li>Lynch, A. J. <em>Mineral crushing and grinding circuits: their simulation, optimization, design and control</em>. Amsterdam: Elsevier, 1977.</li>
+</ul>
+</div>
+{% endblock %}

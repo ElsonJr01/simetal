@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Boas práticas e perguntas frequentes{% endblock %}
+{% block content %}
+<h1>Boas práticas e perguntas frequentes</h1>
+{% include "ajuda/_nav.html" %}
+<div class="prose">
+<p class="lead">O resultado do ajuste nunca é melhor do que os dados que entram. Estes cuidados valem mais do que qualquer ajuste fino de parâmetros.</p>
+
+<h2>Na coleta de dados</h2>
+<ul>
+  <li><strong>Usina estável.</strong> Colete com o circuito em regime; mudanças de carga durante a coleta fazem as medidas descreverem estados diferentes.</li>
+  <li><strong>Mesmo período para todos os fluxos.</strong> Se possível, colete simultaneamente, considerando o tempo de residência entre os pontos.</li>
+  <li><strong>Amostra representativa.</strong> Corte a corrente inteira durante um tempo, em vez de pegar um punhado, e use vários incrementos: assim cada partícula tem a mesma chance de entrar (princípio da teoria da amostragem de Pierre Gy).</li>
+  <li><strong>Vazão de sólidos secos.</strong> Em polpa, meça vazão e densidade (ou % de sólidos) e converta para sólidos secos antes de informar.</li>
+  <li><strong>Equipamentos calibrados.</strong> Balanças e medidores de vazão com erro sistemático enganam o ajuste, que só enxerga erros aleatórios.</li>
+  <li><strong>Registre tudo:</strong> horários, condições de operação, quem coletou, método de análise.</li>
+</ul>
+
+<h2>Na escolha dos desvios-padrão</h2>
+<ul>
+  <li>Prefira o desvio calculado de <strong>amostras repetidas</strong> (calculadora de amostras).</li>
+  <li>Sem repetições, informe a incerteza em % do valor conforme o que você conhece do método de medição; não use zero.</li>
+  <li><strong>Seja coerente:</strong> um σ otimista demais para uma medida ruim faz o sistema exigir mudanças grandes nas outras.</li>
+  <li>Para fluxos que você não mediu, marque <em>não amostrado</em> em vez de inventar um σ.</li>
+</ul>
+
+<h2>No fluxograma</h2>
+<ul>
+  <li>Coloque a <strong>alimentação do circuito como fluxo 1</strong>.</li>
+  <li>Inclua os <strong>fluxos de recirculação</strong> (circuitos fechados): esquecê-los é um erro clássico.</li>
+  <li>Use nomes claros para fluxos e operações; é com eles que você vai ler o resultado.</li>
+  <li>Cada fluxo entra em uma única operação e sai de uma única operação (ou é entrada/saída do circuito).</li>
+</ul>
+
+<h2>Ao ler o resultado</h2>
+<ul>
+  <li>Confira se as <strong>distribuições das saídas somam 100%</strong> em cada operação.</li>
+  <li>Compare campanhas de períodos diferentes; mudanças graduais (desgaste de apex de ciclone, mudança de qualidade do minério) aparecem como deriva nos valores ajustados.</li>
+  <li>Desconfie de ajustes grandes: antes de aceitar, descubra por que a medida está fora.</li>
+  <li>Guarde o resultado com a campanha: o histórico de iterações é mantido, e você pode baixar o CSV.</li>
+</ul>
+
+<h2>O que o {{ brand.name }} não faz</h2>
+<ul>
+  <li>Não corrige erro sistemático (viés) nem substitui um estudo de amostragem.</li>
+  <li>Não impõe valores positivos nem identifica sozinho a causa de um erro grosseiro.</li>
+  <li>Não conhece o seu processo: o julgamento do engenheiro faz parte do método.</li>
+</ul>
+
+<h2 id="faq">Perguntas frequentes</h2>
+{% for item in faq %}
+<details class="faq-item">
+  <summary>{{ item.p }}</summary>
+  <p>{{ item.r }}</p>
+</details>
+{% endfor %}
+</div>
+{% endblock %}

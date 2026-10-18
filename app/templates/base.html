@@ -29,15 +29,17 @@
     <a class="brand" href="/usinas" aria-label="{{ brand.name }} - início">
       {% include "partials/_logo.html" %}
     </a>
-    {% if user %}
     <nav class="topnav" aria-label="Principal">
-      <a href="/usinas">Usinas</a>
+      {% if user %}<a href="/usinas">Usinas</a>{% endif %}
+      <a href="/ajuda">Como usar</a>
+      <a href="/ajuda/glossario">Glossário</a>
       {% if user.papel == "admin" %}<a href="/admin">Administração</a>{% endif %}
-      <a href="/docs" target="_blank" rel="noopener">API</a>
+      {% if user %}
+      <a href="/conta">Minha conta</a>
       <form method="post" action="/logout">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="link" type="submit">Sair ({{ user.nome.split()[0] }})</button></form>
+      {% else %}<a href="/login">Entrar</a>{% endif %}
     </nav>
-    {% endif %}
   </header>
   <main id="conteudo">{% block content %}{% endblock %}</main>
   {% if settings.mascot_enabled %}{% include "partials/_mascote.html" %}{% endif %}
@@ -50,10 +52,50 @@
   <script src="https://vlibras.gov.br/app/vlibras-plugin.js" defer></script>
   <script defer>window.addEventListener("load", function () { if (window.VLibras) new window.VLibras.Widget("https://vlibras.gov.br/app"); });</script>
   {% endif %}
-  <footer class="footer">
-    <span>{{ brand.name }} · {{ brand.tagline }}</span>
-    {# IDENTIDADE VISUAL: logo de instituição parceira (opcional). Defina Brand.institution_logo em config.py #}
-    {% if brand.institution_name %}<img class="inst-logo" src="{{ brand.institution_logo }}" alt="{{ brand.institution_name }}">{% endif %}
+  <footer class="footer" aria-label="Rodapé">
+    <div class="footer-grid">
+      <section class="footer-about">
+        <p class="footer-name">{{ brand.name }}</p>
+        <p>{{ brand.tagline }}. Ferramenta de apoio ao engenheiro de processo: corrige medidas de vazão e teor para que o balanço de cada operação feche.</p>
+        <p class="hint">Versão {{ app_version }}</p>
+        {# IDENTIDADE VISUAL ▸ logo da instituição parceira (static/brand/institution-logo.png). Só aparece se Brand.institution_name estiver preenchido. #}
+        {% if brand.institution_name %}<img class="inst-logo" src="{{ brand.institution_logo }}" alt="{{ brand.institution_name }}">{% endif %}
+      </section>
+      <nav aria-label="Aprender">
+        <p class="footer-title">Aprender</p>
+        <ul>
+          <li><a href="/ajuda">Guia rápido</a></li>
+          <li><a href="/ajuda/glossario">Glossário</a></li>
+          <li><a href="/ajuda/metodo">Como funciona o método</a></li>
+          <li><a href="/ajuda/boas-praticas">Boas práticas e perguntas frequentes</a></li>
+          <li><a href="/ajuda/amostras">Calculadora de amostras</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Sistema">
+        <p class="footer-title">Sistema</p>
+        <ul>
+          <li><a href="/usinas">Minhas usinas</a></li>
+          <li><a href="/conta">Minha conta</a></li>
+          <li><a href="/docs" target="_blank" rel="noopener">API (documentação)</a></li>
+          <li><a href="{{ brand.repo_url }}" target="_blank" rel="noopener">Código-fonte no GitHub</a></li>
+          <li><a href="/sobre">Sobre, créditos e privacidade</a></li>
+          {% if brand.contact_email %}<li><a href="mailto:{{ brand.contact_email }}">Contato</a></li>{% endif %}
+        </ul>
+      </nav>
+      <section aria-label="Fontes de dados e acessibilidade">
+        <p class="footer-title">Fontes e acessibilidade</p>
+        <ul>
+          <li>Localidades: <a href="https://servicodados.ibge.gov.br/api/docs/localidades" target="_blank" rel="noopener">IBGE</a></li>
+          <li>Clima: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo.com</a></li>
+          <li>Dados da mineração: <a href="https://www.gov.br/anm/pt-br/acesso-a-informacao/dados-abertos/bases-de-dados" target="_blank" rel="noopener">ANM</a></li>
+          <li>Libras: <a href="https://vlibras.gov.br" target="_blank" rel="noopener">VLibras</a></li>
+        </ul>
+      </section>
+    </div>
+    <div class="footer-bottom">
+      <p>© {{ year }} {{ brand.name }}. Método baseado em Damasceno &amp; Nunes, <em>Sistema computadorizado para ajuste e fechamento de balanço de massas e metalúrgico</em>, EPUSP, 1992.</p>
+      <p class="hint">Os resultados dependem da qualidade das medidas e dos desvios informados e não substituem a avaliação de quem conhece o processo.</p>
+    </div>
   </footer>
 </body>
 </html>

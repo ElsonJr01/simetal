@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Glossário{% endblock %}
+{% block content %}
+<h1>Glossário</h1>
+{% include "ajuda/_nav.html" %}
+<p class="muted">Termos do processo mineral, da estatística de medidas e do método do {{ brand.name }}.</p>
+<label class="search">Filtrar termos
+  <input type="search" id="filtro-glossario" placeholder="Digite parte do termo ou da explicação" autocomplete="off">
+</label>
+<p id="filtro-vazio" class="muted" hidden>Nenhum termo encontrado.</p>
+<nav class="chips" aria-label="Categorias">
+  {% for cat, terms in grupos %}<a href="#{{ slug(cat) }}">{{ cat }}</a>{% endfor %}
+</nav>
+{% for cat, terms in grupos %}
+<section class="gloss-group" id="{{ slug(cat) }}">
+  <h2>{{ cat }}</h2>
+  <dl class="glossary">
+    {% for t in terms %}
+    <div class="gloss-item" id="{{ slug(t.termo) }}">
+      <dt>{{ t.termo }}</dt>
+      <dd>{{ t.definicao }}
+        {% if t.ver %}<span class="see">Veja também: {% for v in t.ver %}<a href="#{{ slug(v) }}">{{ v }}</a>{{ ", " if not loop.last }}{% endfor %}</span>{% endif %}
+      </dd>
+    </div>
+    {% endfor %}
+  </dl>
+</section>
+{% endfor %}
+<script>
+(function () {
+  const input = document.getElementById("filtro-glossario");
+  const norm = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  input.addEventListener("input", () => {
+    const q = norm(input.value.trim());
+    let shown = 0;
+    document.querySelectorAll(".gloss-item").forEach((el) => {
+      const ok = !q || norm(el.textContent).includes(q);
+      el.hidden = !ok; if (ok) shown++;
+    });
+    document.querySelectorAll(".gloss-group").forEach((g) => { g.hidden = !g.querySelector(".gloss-item:not([hidden])"); });
+    document.getElementById("filtro-vazio").hidden = shown > 0;
+  });
+})();
+</script>
+{% endblock %}

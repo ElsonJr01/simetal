@@ -2,7 +2,9 @@
 {% block title %}{{ camp.nome }}{% endblock %}
 {% block content %}
 <p class="crumb"><a href="/usinas">Usinas</a> / <a href="/usinas/{{ camp.usina_id }}">{{ camp.usina.nome }}</a></p>
-<div class="page-head"><h1>{{ camp.nome }}</h1></div>
+<div class="page-head"><h1>{{ camp.nome }}</h1><a class="hint" href="/ajuda#passos">Precisa de ajuda? Veja o passo a passo</a></div>
+{% if aviso %}<p class="alert ok" role="status">{{ aviso }}</p>{% endif %}
+{% if erro %}<p class="alert error" role="alert">{{ erro }}</p>{% endif %}
 
 <form method="get" class="inline">
   <label>Componente
@@ -10,16 +12,28 @@
     <datalist id="componentes">{% for c in components %}<option value="{{ c }}">{% endfor %}</datalist>
   </label>
   <button class="btn" type="submit">Abrir</button>
-  <span class="hint">“massa” fecha as vazões. Outros nomes (cinzas, Fe…) usam o balanço metalúrgico, depois do de massas.</span>
+  <span class="hint">“massa” fecha as vazões. Outros nomes (cinzas, Fe, uma faixa granulométrica…) fecham teores, depois do balanço de massas.</span>
 </form>
 
+<details class="settings">
+  <summary>Unidades desta campanha: vazão em <strong>{{ camp.unidade_vazao }}</strong>, teor em <strong>{{ camp.unidade_teor }}</strong></summary>
+  <form method="post" action="/campanhas/{{ camp.id }}/unidades" class="inline">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="componente" value="{{ componente }}">
+    <label>Unidade de vazão<input name="unidade_vazao" value="{{ camp.unidade_vazao }}" maxlength="20" required></label>
+    <label>Unidade de teor<input name="unidade_teor" value="{{ camp.unidade_teor }}" maxlength="20" required></label>
+    <button class="btn" type="submit">Salvar unidades</button>
+  </form>
+  <p class="hint">Só rótulos: o sistema não converte unidades. Use a mesma unidade em todos os fluxos.</p>
+</details>
+
 <section>
-  <h2>Medidas de {{ componente }}</h2>
+  <h2>Medidas de {{ componente }} <span class="hint">({{ unit }})</span></h2>
   <form method="post" action="/campanhas/{{ camp.id }}/medidas">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" name="componente" value="{{ componente }}">
     <div class="scroll"><table class="num">
-      <thead><tr><th scope="col">Fluxo</th><th scope="col">Valor medido</th><th scope="col">Desvio-padrão</th><th scope="col">Não amostrado</th></tr></thead>
+      <thead><tr><th scope="col">Fluxo</th><th scope="col">Valor medido ({{ unit }})</th><th scope="col">Desvio-padrão ({{ unit }})</th><th scope="col">Não amostrado</th></tr></thead>
       <tbody>
       {% for f in camp.usina.fluxos %}{% set m = measures.get(f.id) %}
       <tr>
@@ -31,17 +45,46 @@
       {% endfor %}
       </tbody>
     </table></div>
-    <p class="hint">Fluxo não amostrado: informe uma estimativa; o desvio-padrão passa a ser igual ao valor (mínima confiabilidade).</p>
-    <button class="btn" type="submit">Salvar medidas</button>
+    <p class="hint">Use vírgula ou ponto como decimal (sem separador de milhar). Fluxo não amostrado: informe uma estimativa; o desvio-padrão passa a ser igual ao valor (confiança mínima). Sem ideia do desvio? Veja a <a href="/ajuda/amostras">calculadora de amostras</a>.</p>
+    <button class="btn primary" type="submit">Salvar medidas</button>
   </form>
+
+  <details class="settings">
+    <summary>Colar da planilha</summary>
+    <form method="post" action="/campanhas/{{ camp.id }}/colar" class="stack narrow">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="componente" value="{{ componente }}">
+      <label>Uma linha por fluxo, na ordem dos fluxos: <code>valor  desvio</code> (ou <code>fluxo  valor  desvio</code>)
+        <textarea name="texto" rows="6" placeholder="3682,36&#9;3682,36&#10;554,1&#9;554,1&#10;6027,8&#9;858,423"></textarea></label>
+      <button class="btn" type="submit">Importar</button>
+      <span class="hint">Copie as duas colunas no Excel e cole aqui (separador tab, ponto e vírgula ou espaço). Esta ação substitui as medidas dos fluxos informados.</span>
+    </form>
+  </details>
 </section>
+
+{% include "partials/_observabilidade.html" %}
 
 <section>
   <h2>Ajuste</h2>
   <form hx-post="/campanhas/{{ camp.id }}/ajustar" hx-target="#resultado" hx-swap="innerHTML" class="inline">
     <input type="hidden" name="componente" value="{{ componente }}">
     <button class="btn primary" type="submit">{{ "Recalcular a partir das medidas" if ajuste else "Fechar balanço de " ~ componente }}</button>
+    {% if ajuste %}<a class="btn" href="/campanhas/{{ camp.id }}/exportar?componente={{ componente|urlencode }}">Baixar CSV</a>{% endif %}
   </form>
   <div id="resultado" aria-live="polite">{% include "partials/_resultado.html" %}</div>
 </section>
+
+{% if can_indicators %}
+<section>
+  <h2>Indicadores metalúrgicos de {{ componente }}</h2>
+  <p class="muted">Escolha a alimentação e o produto (normalmente o concentrado). Usa os últimos valores ajustados de massa e de {{ componente }}.</p>
+  <form hx-get="/campanhas/{{ camp.id }}/indicadores" hx-target="#indicadores" hx-swap="innerHTML" class="inline">
+    <input type="hidden" name="componente" value="{{ componente }}">
+    <label>Alimentação<select name="alim">{% for f in camp.usina.fluxos %}<option value="{{ f.numero }}" {{ "selected" if f.numero == 1 }}>{{ f.numero }} · {{ f.nome }}</option>{% endfor %}</select></label>
+    <label>Produto<select name="prod">{% for f in camp.usina.fluxos %}<option value="{{ f.numero }}" {{ "selected" if f.numero == last_flow }}>{{ f.numero }} · {{ f.nome }}</option>{% endfor %}</select></label>
+    <button class="btn" type="submit">Calcular indicadores</button>
+  </form>
+  <div id="indicadores" aria-live="polite"></div>
+</section>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Calculadora de amostras{% endblock %}
+{% block content %}
+<h1>Calculadora de amostras</h1>
+{% include "ajuda/_nav.html" %}
+<div class="prose">
+<p>Cole as medidas repetidas de <strong>um mesmo ponto</strong> (uma por linha ou separadas por espaço, ponto e vírgula ou tab) e veja a média e o desvio-padrão para informar na campanha. Aceita vírgula ou ponto decimal.</p>
+</div>
+<form hx-post="/ajuda/amostras" hx-target="#amostras-resultado" hx-swap="innerHTML" class="stack narrow">
+  <label>Valores das amostras
+    <textarea name="texto" rows="8" placeholder="23,1&#10;22,8&#10;23,5&#10;22,9" required></textarea>
+  </label>
+  <button class="btn primary" type="submit">Calcular</button>
+</form>
+<div id="amostras-resultado" aria-live="polite"></div>
+{% endblock %}

@@ -1,0 +1,5 @@
+<nav class="subnav" aria-label="Ajuda">
+  {% for key, label, href in [("guia","Guia rápido","/ajuda"),("metodo","Como funciona","/ajuda/metodo"),("glossario","Glossário","/ajuda/glossario"),("praticas","Boas práticas e FAQ","/ajuda/boas-praticas"),("amostras","Calculadora de amostras","/ajuda/amostras"),("sobre","Sobre e privacidade","/sobre")] %}
+  <a href="{{ href }}" {% if secao == key %}aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>

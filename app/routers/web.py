@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import quote
 
@@ -12,7 +13,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import auth_service, csrf, services
+from app import __version__, auth_service, csrf, services
 from app.auth_service import AuthError, client_ip
 from app.config import get_settings
 from app.core import InvalidInputError, SingularSystemError, diagnose
@@ -22,12 +23,22 @@ from app.integrations.http import IntegrationError
 from app.db import get_db
 from app.deps import current_user, get_owned_campanha, get_owned_usina
 from app.models import Ajuste, Campanha, Usina, Usuario
-from app.security import COOKIE_NAME, create_token, hash_password
+from app.security import COOKIE_NAME, create_token, hash_password, verify_password
 from app.seed import create_cambui
 
 router = APIRouter(include_in_schema=False, dependencies=[Depends(csrf.csrf_protect)])
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
 
+
+def fmt_num(value, decimals: int = 2) -> str:
+    """Formata no padrão brasileiro: 3.750,82."""
+    if value is None:
+        return "–"
+    text = f"{float(value):,.{decimals}f}"
+    return text.replace(",", "§").replace(".", ",").replace("§", ".")
+
+
+templates.env.filters["num"] = fmt_num
 
 TIP_CONTEXT = {"usinas.html": "usinas", "usina.html": "fluxograma", "campanha.html": "medidas,resultado"}
 
@@ -36,7 +47,8 @@ def render(request: Request, name: str, status_code: int = 200, **ctx) -> HTMLRe
     settings = get_settings()
     token = request.cookies.get(csrf.COOKIE) or csrf.new_token()
     base = {
-        "brand": settings.brand, "settings": settings, "csrf_token": token,
+        "brand": settings.brand, "settings": settings, "csrf_token": token, "user": None,
+        "app_version": __version__, "year": datetime.now(UTC).year,
         "tip_context": TIP_CONTEXT.get(name, "geral"),
     }
     response = templates.TemplateResponse(request, name, {**base, **ctx}, status_code=status_code)
@@ -47,10 +59,7 @@ def render(request: Request, name: str, status_code: int = 200, **ctx) -> HTMLRe
 def _to_float(value: str | None) -> float | None:
     if value is None or not value.strip():
         return None
-    try:
-        return float(value.replace(",", "."))
-    except ValueError as exc:
-        raise services.ServiceError(f"Valor numérico inválido: '{value}'.") from exc
+    return services.parse_decimal(value)
 
 
 def _set_cookie(response: Response, user: Usuario) -> None:
@@ -237,7 +246,7 @@ def _result_ctx(camp: Campanha, componente: str, ajuste: Ajuste | None, error: s
     return {
         "camp": camp, "componente": componente, "ajuste": ajuste, "alerts": alerts, "chart": chart,
         "error": error, "max_iter": get_settings().max_iterations,
-        "is_mass": componente == services.MASSA,
+        "is_mass": componente == services.MASSA, "unit": services.unit_for(camp, componente),
     }
 
 
@@ -250,10 +259,27 @@ def campanha_page(
     componente = componente.strip() or services.MASSA
     measures = services.measures_for(camp, componente)
     components = sorted({"massa", "cinzas", componente, *(m.componente for m in camp.medidas)})
+    can_indicators = (
+        componente != services.MASSA
+        and services.last_adjustment(camp, services.MASSA) is not None
+        and services.last_adjustment(camp, componente) is not None
+    )
     return render(
         request, "campanha.html", user=user, measures=measures, components=components,
+        observ=services.observability_for(camp) if componente == services.MASSA else None,
+        can_indicators=can_indicators, last_flow=len(camp.usina.fluxos),
+        aviso=request.query_params.get("aviso"), erro=request.query_params.get("erro"),
         **_result_ctx(camp, componente, services.last_adjustment(camp, componente)),
     )
+
+
+def _back_to(camp: Campanha, componente: str, *, aviso: str | None = None, erro: str | None = None) -> RedirectResponse:
+    qs = f"?componente={quote(componente)}"
+    if aviso:
+        qs += f"&aviso={quote(aviso)}"
+    if erro:
+        qs += f"&erro={quote(erro)}"
+    return RedirectResponse(f"/campanhas/{camp.id}{qs}", status_code=303)
 
 
 @router.post("/campanhas/{campanha_id}/medidas")
@@ -273,8 +299,61 @@ async def salvar_medidas(request: Request, campanha_id: int, db: Session = Depen
         ]
         services.save_measures(db, camp, componente, rows)
     except services.ServiceError as exc:
-        raise HTTPException(422, str(exc)) from exc
-    return RedirectResponse(f"/campanhas/{camp.id}?componente={componente}", status_code=303)
+        return _back_to(camp, componente, erro=str(exc))
+    return _back_to(camp, componente, aviso="Medidas salvas.")
+
+
+@router.post("/campanhas/{campanha_id}/colar")
+def colar_planilha(
+    campanha_id: int, componente: str = Form("massa"), texto: str = Form(""),
+    db: Session = Depends(get_db), user: Usuario = Depends(current_user),
+):
+    camp = get_owned_campanha(db, user, campanha_id)
+    componente = componente.strip() or services.MASSA
+    try:
+        n = services.apply_pasted(db, camp, componente, texto)
+    except services.ServiceError as exc:
+        return _back_to(camp, componente, erro=str(exc))
+    return _back_to(camp, componente, aviso=f"{n} linha(s) importada(s) da planilha.")
+
+
+@router.post("/campanhas/{campanha_id}/unidades")
+def salvar_unidades(
+    campanha_id: int, componente: str = Form("massa"), unidade_vazao: str = Form(...), unidade_teor: str = Form(...),
+    db: Session = Depends(get_db), user: Usuario = Depends(current_user),
+):
+    camp = get_owned_campanha(db, user, campanha_id)
+    try:
+        services.set_units(db, camp, unidade_vazao, unidade_teor)
+    except services.ServiceError as exc:
+        return _back_to(camp, componente, erro=str(exc))
+    return _back_to(camp, componente, aviso="Unidades atualizadas.")
+
+
+@router.get("/campanhas/{campanha_id}/indicadores")
+def indicadores(
+    request: Request, campanha_id: int, componente: str = "cinzas", alim: int = 1, prod: int = 2,
+    db: Session = Depends(get_db), user: Usuario = Depends(current_user),
+):
+    camp = get_owned_campanha(db, user, campanha_id)
+    try:
+        ind, erro = services.indicators_for(camp, componente, alim, prod), None
+    except services.ServiceError as exc:
+        ind, erro = None, str(exc)
+    return render(request, "partials/_indicadores.html", ind=ind, erro=erro, camp=camp, componente=componente)
+
+
+@router.get("/campanhas/{campanha_id}/exportar")
+def exportar(campanha_id: int, componente: str = "massa", db: Session = Depends(get_db), user: Usuario = Depends(current_user)):
+    camp = get_owned_campanha(db, user, campanha_id)
+    try:
+        filename, content = services.export_csv(camp, componente)
+    except services.ServiceError as exc:
+        return _back_to(camp, componente, erro=str(exc))
+    return Response(
+        content.encode("utf-8"), media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.post("/campanhas/{campanha_id}/ajustar")
@@ -310,3 +389,31 @@ async def iterar(request: Request, campanha_id: int, db: Session = Depends(get_d
     except (services.ServiceError, InvalidInputError, SingularSystemError, ValueError) as exc:
         ctx = _result_ctx(camp, componente, services.last_adjustment(camp, componente), error=str(exc))
     return render(request, "partials/_resultado.html", **ctx)
+
+
+# -------------------------------------------------------------------- conta
+@router.get("/conta")
+def conta(request: Request, user: Usuario = Depends(current_user)):
+    return render(request, "conta.html", user=user, msg=request.query_params.get("msg"))
+
+
+@router.post("/conta/senha")
+def trocar_senha(
+    request: Request, atual: str = Form(...), nova: str = Form(...), confirmar: str = Form(...),
+    db: Session = Depends(get_db), user: Usuario = Depends(current_user),
+):
+    erro = None
+    if not verify_password(atual, user.senha_hash):
+        erro = "A senha atual está incorreta."
+    elif len(nova) < 8:
+        erro = "A nova senha precisa ter pelo menos 8 caracteres."
+    elif nova != confirmar:
+        erro = "A confirmação não confere com a nova senha."
+    elif nova == atual:
+        erro = "A nova senha precisa ser diferente da atual."
+    if erro:
+        return render(request, "conta.html", 422, user=user, erro=erro)
+    user.senha_hash = hash_password(nova)
+    db.commit()
+    auth_service.audit(db, "senha_alterada", user=user, alvo=user.email, ip=client_ip(request))
+    return RedirectResponse(f"/conta?msg={quote('Senha alterada com sucesso.')}", status_code=303)

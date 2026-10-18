@@ -1,0 +1,10 @@
+{% if erro %}<p class="alert error" role="alert">{{ erro }}</p>
+{% elif ind %}
+<dl class="stats">
+  <div><dt>Recuperação metalúrgica</dt><dd>{{ ind.recuperacao|num(2) }}%</dd><span class="hint">R = (C·c) ÷ (F·f)</span></div>
+  <div><dt>Razão de enriquecimento</dt><dd>{{ ind.razao_enriquecimento|num(3) }}</dd><span class="hint">E = c ÷ f</span></div>
+  <div><dt>Razão de concentração</dt><dd>{{ ind.razao_concentracao|num(3) }}</dd><span class="hint">K = F ÷ C</span></div>
+  <div><dt>Rendimento mássico</dt><dd>{{ ind.rendimento|num(2) }}%</dd><span class="hint">Y = C ÷ F</span></div>
+</dl>
+<p class="hint">Calculado para <strong>{{ ind.componente }}</strong> com a alimentação (fluxo {{ ind.alimentacao }}) e o produto (fluxo {{ ind.produto }}), usando os valores ajustados (massas: iteração {{ ind.iter_massa }}; {{ ind.componente }}: iteração {{ ind.iter_componente }}). F, C = vazões; f, c = teores.</p>
+{% endif %}

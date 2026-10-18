@@ -22,7 +22,12 @@ Regras de dependência: `routers → services → core` e `services → models`.
 | UC08/UC09 Balanço de massas / metalúrgico | `core/reconcile.py`, `services.run_adjustment` |
 | UC10/UC11 Iteração e convergência | `core/iteration.py`, `POST /campanhas/{id}/iterar` |
 | UC12 Diagnóstico | `core/diagnostics.py` |
-| UC13 Comparar campanhas, UC14 Exportar, UC15 Importar, UC16 Admin | **não implementados na v0.1** (ver roadmap) |
+| UC14 Exportar | `services.export_csv`, `GET /campanhas/{id}/exportar` (CSV para Excel pt-BR) |
+| UC15 Importar | `services.apply_pasted`, 'Colar da planilha' (importação de arquivo CSV/XLSX ainda não) |
+| UC16 Administração | `admin_service.py`, `routers/admin.py` |
+| UC13 Comparar campanhas | **ainda não implementado** |
+| Indicadores metalúrgicos, redundância | `core/indicators.py`, `core/observability.py` |
+| Ajuda pública | `routers/help.py`, `templates/ajuda/`, `app/content/` |
 
 ## Integrações com dados públicos (`app/integrations/`)
 `http.py` (timeout, cache em memória, `IntegrationError`), `ibge.py`, `openmeteo.py`, `anm.py` (catálogo estático).

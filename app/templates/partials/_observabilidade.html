@@ -1,0 +1,12 @@
+{% if observ %}
+<div class="callout">
+  <p class="callout-title">Análise de redundância <span class="hint">(balanço de massas)</span></p>
+  <p>{{ observ.n_medidos }} fluxo(s) medido(s){% if observ.nao_medidos %} e {{ observ.nao_medidos|length }} não amostrado(s) / sem medida{% endif %}.
+  Equações que sobram para corrigir as medidas: <strong>{{ observ.redundancia }}</strong>.</p>
+  {% if observ.nao_medidos %}
+    {% if observ.tudo_calculavel %}<p class="ok-text">Todos os fluxos não medidos podem ser calculados: {{ observ.calculaveis|join(", ") }}.</p>
+    {% else %}<p class="err-text">Estes fluxos <strong>não podem ser determinados</strong> com as medidas atuais: {{ observ.indeterminados|join(", ") }}. Meça ao menos um deles (ou outro fluxo da mesma operação).</p>{% endif %}
+  {% endif %}
+  {% if observ.redundancia == 0 %}<p class="warn-text">Sem redundância, o balanço só calcula valores: ele não corrige medidas e os testes χ² e z não são informativos.</p>{% endif %}
+</div>
+{% endif %}

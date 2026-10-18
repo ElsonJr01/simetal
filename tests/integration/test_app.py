@@ -84,12 +84,12 @@ def test_web_pages_and_demo_flow(web):
     assert "Ciclone" in page and "Matriz M" in page
     camp_id = re.search(r"/campanhas/(\d+)", page).group(1)
     r = client.post(f"/campanhas/{camp_id}/ajustar", data={"componente": "massa"}, headers={"HX-Request": "true"})
-    assert "3750.82" in r.text and "Iteração 1" in r.text
+    assert "3.750,82" in r.text and "Iteração 1" in r.text
     form = {"componente": "massa", **{f"acao_{n}": "calculado" for n in range(1, 7)}}
     r = client.post(f"/campanhas/{camp_id}/iterar", data=form)
     assert "Iteração 2" in r.text
     r = client.post(f"/campanhas/{camp_id}/ajustar", data={"componente": "cinzas"})
-    assert "33.77" in r.text
+    assert "33,77" in r.text
     assert client.get("/static/css/brand.css").status_code == 200
     assert client.get("/static/brand/logo.png").status_code == 200
 

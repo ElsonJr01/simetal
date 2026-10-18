@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Como usar{% endblock %}
+{% block content %}
+<h1>Como usar o {{ brand.name }}</h1>
+{% include "ajuda/_nav.html" %}
+<div class="prose">
+<p class="lead">Em uma usina, o que entra em cada equipamento deveria ser igual ao que sai, mas as medidas têm erro e <strong>não fecham</strong>. O {{ brand.name }} corrige cada medida o mínimo necessário para que todas as operações fechem, corrigindo mais as medidas em que você confia menos.</p>
+
+<h2 id="antes">Antes de começar</h2>
+<p>Separe estas informações do circuito que você vai estudar:</p>
+<ul>
+  <li><strong>O fluxograma:</strong> quais equipamentos (operações) existem e por quais fluxos o material passa entre eles.</li>
+  <li><strong>Vazões</strong> dos fluxos que foram medidos (na mesma unidade, de preferência de sólidos secos), e/ou <strong>teores</strong> (ou outro componente, como uma faixa granulométrica).</li>
+  <li><strong>A incerteza de cada medida:</strong> o desvio-padrão de amostras repetidas, ou uma incerteza em %. Use a <a href="/ajuda/amostras">calculadora de amostras</a> se tiver várias amostras do mesmo ponto.</li>
+  <li>Medidas colhidas <strong>no mesmo período e com a usina estável</strong>, senão elas não descrevem o mesmo estado do processo.</li>
+</ul>
+
+<h2 id="passos">Passo a passo</h2>
+<ol class="steps">
+  <li><strong>Crie uma usina.</strong> Em <a href="/usinas">Usinas</a>, informe o nome. Para só conhecer o sistema, use <em>Criar usina de exemplo</em> (o circuito de finos da Carbonífera Cambuí, com os dados da monografia de 1992).</li>
+  <li><strong>Descreva o fluxograma.</strong> Na página da usina, escreva os fluxos (um por linha; a ordem define o número) e as operações no formato <code>Nome | fluxos que entram | fluxos que saem</code>. Exemplo: <code>Ciclone | 1 | 2, 3</code>. <em>Dica: coloque a alimentação do circuito como fluxo 1.</em> O sistema valida o desenho e mostra a matriz M.</li>
+  <li><strong>(Opcional) Informe o local.</strong> Escolha estado e município; o sistema mostra o clima do local, porque chuva forte pode alterar vazões e umidade.</li>
+  <li><strong>Crie uma campanha.</strong> Uma campanha é um conjunto de medidas colhidas no mesmo período. Defina as <em>unidades</em> (ex.: t/h e %).</li>
+  <li><strong>Informe as medidas.</strong> Para cada fluxo, o valor e o desvio-padrão. Fluxo que não foi medido: dê uma estimativa e marque <em>não amostrado</em>. Tem os dados numa planilha? Use <em>Colar da planilha</em>.</li>
+  <li><strong>Veja a análise de redundância.</strong> Ela diz se os fluxos não medidos podem ser calculados e quantas equações sobram para corrigir as medidas.</li>
+  <li><strong>Feche o balanço de massas.</strong> Clique em <em>Fechar balanço de massa</em>. A tabela mostra entrada, desvio, valor ajustado, % da alimentação e o z de cada fluxo.</li>
+  <li><strong>Leia os alertas e itere.</strong> Para cada fluxo escolha: manter a entrada, usar o valor ajustado ou informar um novo valor. Recalcule até os valores quase pararem de mudar.</li>
+  <li><strong>Feche o balanço de um componente</strong> (cinzas, ferro, uma faixa granulométrica...). Digite o nome do componente, informe teores e desvios e feche. Ele usa as vazões já ajustadas, por isso o balanço de massas vem primeiro.</li>
+  <li><strong>Calcule os indicadores.</strong> Escolha a alimentação e o produto (concentrado) para obter recuperação metalúrgica, razão de enriquecimento, razão de concentração e rendimento.</li>
+  <li><strong>Leve para fora.</strong> <em>Baixar CSV</em> gera um arquivo que o Excel em português abre direto.</li>
+</ol>
+
+<h2 id="alertas">Como ler os alertas</h2>
+<table>
+  <thead><tr><th scope="col">O que aparece</th><th scope="col">O que significa</th><th scope="col">O que fazer</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">Medida suspeita (ajuste &gt; 30%)</th><td>O fluxo precisou mudar muito para o balanço fechar.</td><td>Revise a amostragem e a análise daquele fluxo; se for o caso, informe um valor novo ou um σ maior.</td></tr>
+    <tr><th scope="row">|z| alto (&gt; 1,96)</th><td>A correção foi grande em relação à incerteza informada.</td><td>Mesma revisão; pode ser erro grosseiro.</td></tr>
+    <tr><th scope="row">Teste global reprovado (χ²)</th><td>O conjunto dos dados é incompatível com os desvios informados.</td><td>Procure erros grosseiros ou reveja se os σ estão pequenos demais.</td></tr>
+    <tr><th scope="row">Valor negativo ou teor &gt; 100%</th><td>Resultado fisicamente impossível.</td><td>Algum dado de entrada está muito errado; corrija e recalcule.</td></tr>
+    <tr><th scope="row">Sistema indeterminado ou inconsistente</th><td>Faltam medidas ou há restrições repetidas.</td><td>Meça mais fluxos ou revise o fluxograma.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="perfis">Perfis de usuário</h2>
+<ul>
+  <li><strong>Engenheiro:</strong> cria e edita as próprias usinas, campanhas e ajustes.</li>
+  <li><strong>Visitante:</strong> só consulta; não cria nem altera nada.</li>
+  <li><strong>Administrador:</strong> gerencia usuários e vê o registro de auditoria em <em>Administração</em>.</li>
+</ul>
+
+<h2 id="atalhos">Precisa de mais?</h2>
+<ul>
+  <li>Termos desconhecidos: <a href="/ajuda/glossario">glossário</a>.</li>
+  <li>Entender a matemática, com um exemplo numérico: <a href="/ajuda/metodo">como funciona o método</a>.</li>
+  <li>Dúvidas comuns e cuidados com a amostragem: <a href="/ajuda/boas-praticas">boas práticas e perguntas frequentes</a>.</li>
+  <li>O mascote ({{ brand.mascot_name }}) dá dicas conforme a tela em que você está.</li>
+</ul>
+</div>
+{% endblock %}

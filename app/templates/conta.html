@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Minha conta{% endblock %}
+{% block content %}
+<h1>Minha conta</h1>
+{% if msg %}<p class="alert ok" role="status">{{ msg }}</p>{% endif %}
+{% if erro %}<p class="alert error" role="alert">{{ erro }}</p>{% endif %}
+<dl class="facts">
+  <div><dt>Nome</dt><dd>{{ user.nome }}</dd></div>
+  <div><dt>E-mail</dt><dd>{{ user.email }}</dd></div>
+  <div><dt>Perfil</dt><dd>{{ user.papel }}</dd></div>
+  <div><dt>Último acesso</dt><dd>{{ user.ultimo_login.strftime("%d/%m/%Y %H:%M") ~ " (UTC)" if user.ultimo_login else "–" }}</dd></div>
+</dl>
+<h2>Trocar a senha</h2>
+<form method="post" action="/conta/senha" class="stack narrow">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label>Senha atual<input name="atual" type="password" required autocomplete="current-password"></label>
+  <label>Nova senha <span class="hint">mínimo de 8 caracteres</span><input name="nova" type="password" required minlength="8" autocomplete="new-password"></label>
+  <label>Confirmar a nova senha<input name="confirmar" type="password" required minlength="8" autocomplete="new-password"></label>
+  <button class="btn primary" type="submit">Trocar senha</button>
+</form>
+<p class="hint">Esqueceu a senha atual? Peça a um administrador para gerar uma senha temporária.</p>
+{% endblock %}

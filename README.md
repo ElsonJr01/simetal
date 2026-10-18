@@ -33,6 +33,17 @@ python -m pytest --cov=app
 ```
 Inclui a reprodução da iteração 1 das Tabelas 1 (massas) e 2 (cinzas) da monografia. A rede externa é simulada, então os testes rodam offline.
 
+## Ajuda e conteúdo didático
+O menu **Como usar** (público, sem login) reúne: guia passo a passo, **glossário** (50+ termos da área, com busca), **como funciona o método** (com exemplo numérico real calculado na hora), **boas práticas e perguntas frequentes**, **calculadora de amostras** e **Sobre** (créditos, fontes, privacidade e aviso de uso). O rodapé leva a todas elas.
+Os textos moram em `app/content/` (glossário, FAQ, dicas) e `app/templates/ajuda/`, e podem ser revistos por especialistas sem mexer na lógica.
+
+## O que o sistema faz pela campanha
+- Medidas com desvio-padrão, **fluxos não amostrados**, **colar da planilha**, **unidades** por campanha e aceitação de vírgula ou ponto decimal.
+- **Análise de redundância**: quais fluxos não medidos são calculáveis e quantas equações sobram para corrigir as medidas.
+- Balanço de massas e de qualquer componente (teor, faixa granulométrica...), iteração assistida, alertas e **% de distribuição**.
+- **Indicadores metalúrgicos**: recuperação, razão de enriquecimento, razão de concentração, rendimento mássico.
+- **Baixar CSV** (Excel em português) e **Minha conta** (troca de senha).
+
 ## Área administrativa (/admin)
 Só para o perfil `admin`.
 - **Painel:** usuários, usinas, ajustes, falhas de login (7 dias), estado do banco, abrir/fechar o cadastro público, teste ao vivo de IBGE e Open-Meteo.
@@ -85,20 +96,23 @@ api/index.py            entrypoint do Vercel
 app/core/               núcleo de cálculo (puro, testado)
 app/models.py, db.py    tabelas, engine, atualização de colunas
 app/services.py         casos de uso do balanço
+app/content/            glossário, FAQ e dicas (textos editáveis)
 app/auth_service.py     login, bloqueio, auditoria, admin inicial
 app/admin_service.py    regras da área /admin
-app/routers/            api.py (REST), web.py (HTML), admin.py (/admin)
+app/routers/            api.py (REST), web.py (HTML), admin.py (/admin), help.py (ajuda pública)
 app/integrations/       IBGE, Open-Meteo, catálogo ANM
 app/brand.py            locais fixos dos arquivos de marca
 app/templates, static/  interface e identidade visual
 migrations/             Alembic (0001_inicial)
 scripts/                gerar_placeholders.py
 tests/                  unit (core, integrações) e integration (API, web, admin)
-docs/                   arquitetura e identidade visual
+docs/                   arquitetura, identidade visual e guia do desenvolvedor
 ```
 
 ## Limitações conhecidas
 - O ajuste linear não impõe valores não negativos (apenas avisa).
-- Sem importação/exportação nem comparação de campanhas (UC13 a UC15).
-- Sem recuperação de senha por e-mail (o admin gera senha temporária).
+- Sem comparação de campanhas (UC13) e sem importação de arquivo CSV/XLSX (só colar da planilha).
+- Sem recuperação de senha por e-mail (o admin gera senha temporária; o usuário troca em Minha conta).
+- Textos de privacidade e termos são um modelo técnico: precisam de revisão da instituição responsável antes de uso com dados reais.
+- Sem arquivo de licença do código (defina com a sua instituição).
 - Sem CSP; o cabeçalho de segurança cobre o básico.

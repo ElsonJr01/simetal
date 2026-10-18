@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Sobre, créditos e privacidade{% endblock %}
+{% block content %}
+<h1>Sobre, créditos e privacidade</h1>
+{% include "ajuda/_nav.html" %}
+{# REVISÃO NECESSÁRIA: os textos de privacidade e termos abaixo são um modelo técnico, escrito a partir do que o sistema realmente faz.
+   A instituição responsável deve revisá-los (LGPD, política interna) antes de uso com dados reais. Veja docs/GUIA_DO_DESENVOLVEDOR.md. #}
+<div class="prose">
+<h2>O que é</h2>
+<p>O {{ brand.name }} é um sistema web para <strong>ajustar e fechar balanços de massas e metalúrgicos</strong> de circuitos de beneficiamento mineral. Versão {{ app_version }}. Código-fonte: <a href="{{ brand.repo_url }}" target="_blank" rel="noopener">{{ brand.repo_url }}</a>.</p>
+
+<h2>Créditos</h2>
+<ul>
+  <li>O método e o programa original (BALMAS, em Turbo Pascal) são de <strong>Paulo Fernando de Toledo Damasceno</strong>, orientado por <strong>M.Sc.Eng. Antonio Carlos Nunes</strong> (Mineração Taboca S.A.) e pelo <strong>Prof. Dr. Arthur P. Chaves</strong> (Escola Politécnica da USP, Departamento de Engenharia de Minas), em trabalho de formatura de novembro de 1992.</li>
+  <li>Os dados do exemplo vêm do relatório elaborado pelo Prof. Arthur Pinto Chaves para a Companhia Carbonífera Cambuí (1990), conforme citado na monografia.</li>
+  <li>O {{ brand.name }} é uma <strong>reimplementação</strong> em Python do método descrito nesse trabalho; o crédito do método é dos autores originais.</li>
+</ul>
+
+<h2>Fontes de dados e licenças</h2>
+<ul>
+  <li><strong>IBGE</strong>, API de Localidades: dados públicos de estados e municípios.</li>
+  <li><strong>Open-Meteo.com</strong>: clima do local da usina. Gratuito apenas para uso não comercial e com atribuição.</li>
+  <li><strong>ANM</strong>, dados abertos da mineração: o sistema só aponta links oficiais.</li>
+  <li><strong>VLibras</strong> (governo federal): tradução para Libras.</li>
+</ul>
+
+<h2>Privacidade e cookies</h2>
+<ul>
+  <li><strong>O que guardamos:</strong> nome, e-mail, senha (somente o hash, nunca a senha), as usinas, campanhas, medidas e resultados que você cadastra, o horário do último acesso e um registro de eventos de segurança (tentativas de login e ações administrativas, com o endereço IP).</li>
+  <li><strong>Quem vê:</strong> você vê as suas usinas. Administradores do sistema conseguem ver todas as usinas e o registro de auditoria.</li>
+  <li><strong>Cookies:</strong> apenas dois, necessários ao funcionamento: o de sessão (mantém você logado) e o de proteção contra formulários forjados (CSRF). Não há cookies de publicidade nem de rastreamento.</li>
+  <li><strong>Armazenamento no navegador:</strong> o mascote guarda, só no seu navegador, quais dicas você já viu.</li>
+  <li><strong>Serviços de terceiros:</strong> ao abrir as páginas, o seu navegador carrega fontes (Google Fonts), bibliotecas (jsDelivr) e o VLibras, o que expõe o seu endereço IP a esses serviços. O servidor consulta IBGE e Open-Meteo apenas com o município ou as coordenadas da usina, sem enviar dados pessoais.</li>
+  <li><strong>Seus direitos:</strong> para corrigir ou excluir a sua conta e os seus dados, peça a um administrador.{% if brand.contact_email %} Contato: <a href="mailto:{{ brand.contact_email }}">{{ brand.contact_email }}</a>.{% endif %}</li>
+</ul>
+
+<h2>Aviso de uso</h2>
+<p>O {{ brand.name }} é uma <strong>ferramenta de apoio</strong>. Os resultados são matematicamente consistentes, mas só são tão bons quanto as medidas e os desvios informados, e o sistema não conhece o seu processo. Decisões de operação ou de projeto devem ser validadas por profissional habilitado. O software é fornecido sem garantias.</p>
+</div>
+{% endblock %}

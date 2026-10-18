@@ -22,6 +22,8 @@ class Brand(BaseModel):
     tagline: str = "Ajuste e fechamento de balanço de massas e metalúrgico"
     mascot_name: str = "Pepita"  # nome provisório do mascote
     institution_name: str = ""  # preencha para exibir institution-logo.png no rodapé
+    repo_url: str = "https://github.com/ElsonJr01/SIMETAL"  # código-fonte (rodapé)
+    contact_email: str = ""  # opcional: aparece no rodapé e em "Sobre" quando preenchido
     logo: str = _b.BY_KEY["logo"].url
     logo_dark: str = _b.BY_KEY["logo_dark"].url
     logo_mark: str = _b.BY_KEY["logo_mark"].url

@@ -42,6 +42,14 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> Usuario:
     return user
 
 
+def optional_user(request: Request, db: Session = Depends(get_db)) -> Usuario | None:
+    """Usuário logado ou None (para páginas públicas, como a ajuda)."""
+    token = _token_from(request)
+    user_id = decode_token(token) if token else None
+    user = db.get(Usuario, user_id) if user_id else None
+    return user if user and user.ativo else None
+
+
 def require_admin(user: Usuario = Depends(current_user)) -> Usuario:
     if user.papel != "admin":
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Acesso restrito a administradores.")

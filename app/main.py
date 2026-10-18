@@ -18,7 +18,7 @@ from app.config import get_settings
 from app.db import SessionLocal, init_db
 from app.deps import LoginRequired
 from app.middleware import RequestMiddleware
-from app.routers import admin, api, web
+from app.routers import admin, api, help, web
 
 log = logging.getLogger("simetal")
 
@@ -53,6 +53,7 @@ def create_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
     app.include_router(api.router)
     app.include_router(web.router)
+    app.include_router(help.router)
     app.include_router(admin.router)
 
     @app.exception_handler(LoginRequired)

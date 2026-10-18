@@ -1,0 +1,13 @@
+{% if erro %}
+<p class="alert error" role="alert">{{ erro }}</p>
+{% elif res %}
+<h2>Resultado</h2>
+<dl class="stats">
+  <div><dt>Amostras</dt><dd>{{ res.n }}</dd></div>
+  <div><dt>Média</dt><dd>{{ res.media|num(3) }}</dd></div>
+  <div><dt>Desvio-padrão (s)</dt><dd>{{ res.s|num(3) }}</dd></div>
+  <div><dt>Coef. de variação</dt><dd>{{ res.cv|num(1) if res.cv is not none else "–" }}{{ "%" if res.cv is not none }}</dd></div>
+</dl>
+<p class="hint">Mínimo {{ res.minimo|num(3) }} · máximo {{ res.maximo|num(3) }} · desvio-padrão da média (s/√n): {{ res.sem|num(3) }}</p>
+<p>Na campanha, informe a <strong>média</strong> como valor e o <strong>desvio-padrão (s)</strong> como incerteza. Se preferir considerar a incerteza da própria média, use s/√n (menor), mas seja coerente entre todos os fluxos.</p>
+{% endif %}

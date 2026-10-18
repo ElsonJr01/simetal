@@ -29,9 +29,9 @@
   {% for a in alerts %}<p class="alert {{ a.severity.value }}">{{ a.message }}</p>{% endfor %}
   <form method="post" action="/usinas/{{ usina.id }}/fluxograma" class="split">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <label>Fluxos <span class="hint">um nome por linha; a ordem define o número (1, 2, 3...)</span>
+    <label>Fluxos <span class="hint">um nome por linha; a ordem define o número. Coloque a alimentação do circuito como fluxo 1.</span>
       <textarea name="fluxos" rows="8">{{ flows_text }}</textarea></label>
-    <label>Operações <span class="hint">Nome | números dos fluxos que entram | números dos fluxos que saem</span>
+    <label>Operações <span class="hint">Nome | fluxos que entram | fluxos que saem (ex.: Ciclone | 1 | 2, 3). Inclua os fluxos de recirculação.</span>
       <textarea name="operacoes" rows="8" placeholder="Ciclone | 1 | 2, 3">{{ ops_text }}</textarea></label>
     <div><button class="btn primary" type="submit">Salvar fluxograma</button></div>
   </form>
