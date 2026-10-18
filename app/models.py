@@ -102,8 +102,8 @@ class Campanha(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     usina_id: Mapped[int] = mapped_column(ForeignKey("usina.id", ondelete="CASCADE"), index=True)
     nome: Mapped[str] = mapped_column(String(120))
-    unidade_vazao: Mapped[str] = mapped_column(String(20), default="t/h", server_default="t/h")
-    unidade_teor: Mapped[str] = mapped_column(String(20), default="%", server_default="%")
+    unidade_vazao: Mapped[str] = mapped_column(String(20), default="t/h", server_default="'t/h'")
+    unidade_teor: Mapped[str] = mapped_column(String(20), default="%", server_default="'%'")
     criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     usina: Mapped[Usina] = relationship(back_populates="campanhas")
